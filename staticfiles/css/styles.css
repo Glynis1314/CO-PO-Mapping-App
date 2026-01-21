@@ -1,0 +1,37 @@
+/* Sidebar base styles */
+.sidebar {
+    min-height: 100vh;
+    border-right: 1px solid #ddd;
+    background-color: #f8f9fa !important;   /* Light gray background */
+    padding-top: 1rem;
+}
+
+/* Sidebar nav link styles */
+.sidebar .nav-link {
+    color: #333;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #e9ecef;
+    color: #000;
+}
+
+.sidebar .nav-link.active {
+    background-color: #cfe2ff;  /* Light blue highlight */
+    color: #084298;
+    font-weight: 600;
+}
+
+/* Make icons and links align nicely */
+.sidebar .nav-link span {
+    font-size: 1rem;
+}
+
+/* Ensure sidebar stays full height */
+html, body {
+    height: 100%;
+}

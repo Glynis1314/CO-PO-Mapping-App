@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Evidence Upload — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_hod.html" %}</div>
+  <div class="col-md-9">
+    <h3>Upload Evidence Files</h3>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <form id="evidenceForm">
+          <div class="mb-3">
+            <label class="form-label">Assessment / CO</label>
+            <input class="form-control" name="context" placeholder="Midterm CS101 - CO2">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Upload file</label>
+            <input type="file" class="form-control" name="evidenceFile" accept=".pdf,.png,.jpg,.jpeg,.zip">
+          </div>
+          <button class="btn btn-primary">Upload</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Uploaded Evidence</h6>
+        <ul id="evidenceList" class="list-group">
+          <li class="list-group-item">Midterm CS101 - CO2 — file_report_cs101.pdf</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+{% endblock %}
+<script>
+document.getElementById('evidenceForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const ctx = e.target.context.value || 'Unknown context';
+  const file = e.target.evidenceFile.files[0];
+  if (!file) return alert('Choose a file.');
+  const ul = document.getElementById('evidenceList');
+  const li = document.createElement('li'); li.className='list-group-item';
+  li.textContent = `${ctx} — ${file.name}`;
+  ul.prepend(li);
+  e.target.reset();
+  alert('Uploaded (prototype only).');
+});
+</script>
+{% endblock %}

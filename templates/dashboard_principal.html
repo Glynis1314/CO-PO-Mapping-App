@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Principal Dashboard — Attainment Prototype{% endblock %}
+
+{% block content %}
+
+<div class="row">
+
+  <!-- Sidebar -->
+  <div class="col-md-3">
+    {% include "components/sidebar_principal.html" %}
+  </div>
+
+  <!-- Main content -->
+  <div class="col-md-9">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">Principal Dashboard</h3>
+        <div class="text-muted small">
+          Institution-wide view of CO/PO attainment, department performance, and evidence tracking.
+        </div>
+      </div>
+    </div>
+
+    <!-- Institution Stats -->
+    <div class="row g-3 mb-4">
+
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body text-center">
+            <div class="h2 mb-0">13</div>
+            <div class="small text-muted">Departments</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body text-center">
+            <div class="h2 mb-0">284</div>
+            <div class="small text-muted">Assessments Completed</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body text-center">
+            <div class="h2 mb-0 text-danger">17</div>
+            <div class="small text-muted">COs Below Threshold</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Department Attainment Overview -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Department Attainment Summary</h5>
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Average CO Attainment</th>
+              <th>Average PO Attainment</th>
+              <th>Gaps</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Computer Engineering</td>
+              <td>72%</td>
+              <td>69%</td>
+              <td><span class="badge bg-warning">Moderate</span></td>
+            </tr>
+            <tr>
+              <td>IT</td>
+              <td>75%</td>
+              <td>70%</td>
+              <td><span class="badge bg-success">Low</span></td>
+            </tr>
+            <tr>
+              <td>Mechanical</td>
+              <td>63%</td>
+              <td>58%</td>
+              <td><span class="badge bg-danger">High</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Institution-wide reports -->
+    <div class="row g-3 mb-4">
+
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6>Attainment Reports</h6>
+            <p class="small text-muted">
+              View consolidated CO/PO attainment across all departments.
+            </p>
+            <a href="/reports/attainment/" class="btn btn-outline-primary btn-sm">Open Reports</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6>User Management</h6>
+            <p class="small text-muted">
+              Manage teachers, HODs, and department roles.
+            </p>
+            <a href="/settings/users/" class="btn btn-outline-primary btn-sm">Manage Users</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6>Evidence Repository</h6>
+            <p class="small text-muted">
+              Review uploaded evidence files submitted department-wise.
+            </p>
+            <a href="/evidence/" class="btn btn-outline-primary btn-sm">View Evidence</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Important notifications -->
+    <div class="card shadow-sm mb-5">
+      <div class="card-body">
+        <h6 class="mb-2">Notifications</h6>
+
+        <ul class="list-group">
+          <li class="list-group-item">
+            CO attainment below threshold in Mechanical Department — <span class="text-danger">17 COs affected</span>  
+            <span class="small text-muted float-end">2 hrs ago</span>
+          </li>
+          <li class="list-group-item">
+            New evidence uploaded for "Midterm – CS101" by Computer Engineering  
+            <span class="small text-muted float-end">1 day ago</span>
+          </li>
+          <li class="list-group-item">
+            Attainment report for 2025-26 ODD semester is ready  
+            <span class="small text-muted float-end">3 days ago</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

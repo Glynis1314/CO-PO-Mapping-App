@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Users — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_hod.html" %}</div>
+  <div class="col-md-9">
+    <h3>Manage Users</h3>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <form id="userForm" class="row g-3">
+          <div class="col-md-3"><input name="uid" class="form-control" placeholder="Username"></div>
+          <div class="col-md-3"><input name="name" class="form-control" placeholder="Full name"></div>
+          <div class="col-md-3">
+            <select name="role" class="form-select">
+              <option>Teacher</option><option>HOD</option><option>Principal</option>
+            </select>
+          </div>
+          <div class="col-md-3"><button class="btn btn-primary">Add / Update</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Existing users</h6>
+        <table class="table table-sm">
+          <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>dr_a</td><td>Dr. A</td><td>Teacher</td><td><button class="btn btn-sm btn-outline-danger">Remove</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% block extra_js %}
+    {% endblock %}
+<script>
+document.getElementById('userForm').addEventListener('submit', e => {
+  e.preventDefault();
+  alert('User added (prototype).');
+});
+</script>
+{% endblock %}

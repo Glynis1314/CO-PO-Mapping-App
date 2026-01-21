@@ -1,0 +1,33 @@
+# --- Python / Django ---
+*.py[cod]
+*$py.class
+__pycache__/
+.Python
+db.sqlite3
+db.upload
+/static/
+/media/
+/staticfiles/
+
+# --- Environments ---
+.env
+.venv
+env/
+venv/
+ENV/
+
+# --- IDEs / Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS / Logs ---
+.DS_Store
+Thumbs.db
+*.log
+
+# --- Project Specific (Documentation/Manuals) ---
+# If you don't want to track the PDF/PPT source manuals in git
+*.pdf
+*.pptx

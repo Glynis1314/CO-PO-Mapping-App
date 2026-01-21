@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Create Assessment — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <h3 class="mb-0">Create Assessment</h3>
+    <div class="text-muted small">Define assessment, add questions and map each question to a Course Outcome (CO).</div>
+  </div>
+  <div class="ms-auto">
+    <a class="btn btn-outline-secondary" href="/teacher/upload-marks/">Upload Marks</a>
+    <a class="btn btn-outline-primary" href="/samples/">Download Sample CSV</a>
+  </div>
+</div>
+
+<div class="card mb-4 shadow-sm">
+  <div class="card-body">
+    <form id="assessmentForm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Assessment Name</label>
+          <input type="text" id="assessName" class="form-control" placeholder="Midterm CS101" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Date</label>
+          <input type="date" id="assessDate" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Total Marks</label>
+          <input type="number" id="totalMarks" class="form-control" min="1" value="100">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Max Qs</label>
+          <input type="number" id="maxQs" class="form-control" min="1" value="10">
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Questions table -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between mb-2">
+      <h5 class="card-title mb-0">Questions (map to COs)</h5>
+      <div>
+        <button id="btnAddQ" class="btn btn-sm btn-success">+ Add Question</button>
+        <button id="btnExportCSV" class="btn btn-sm btn-outline-primary">Export Sample CSV</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm align-middle" id="questionsTable">
+        <thead>
+          <tr>
+            <th style="width:6%">#</th>
+            <th>Question ID</th>
+            <th>Question Text</th>
+            <th>Max Marks</th>
+            <th>Map to CO</th>
+            <th style="width:8%">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- JS will insert rows here -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-3">
+      <button id="btnSaveAssessment" class="btn btn-primary">Save Assessment (local preview)</button>
+      <a id="linkPreview" class="btn btn-outline-secondary d-none" download="assessment_preview.json">Download Preview JSON</a>
+    </div>
+  </div>
+</div>
+
+<!-- Help / expected CSV format -->
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h6>Sample CSV format for marks upload</h6>
+    <p class="small text-muted mb-1">Columns: StudentID, StudentName, Q1, Q2, Q3, ... where Q1, Q2 etc. correspond to the Question IDs defined above.</p>
+    <p class="small text-muted mb-0">Use the "Export Sample CSV" button to generate a downloadable sample that matches the current question list.</p>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Simple dynamic question manager & CSV/JSON export
+  document.addEventListener('DOMContentLoaded', () => {
+    const tableBody = document.querySelector('#questionsTable tbody');
+    const btnAddQ = document.getElementById('btnAddQ');
+    const btnExportCSV = document.getElementById('btnExportCSV');
+    const btnSave = document.getElementById('btnSaveAssessment');
+    const linkPreview = document.getElementById('linkPreview');
+
+    // Example CO list (in real app, populated from DB per subject)
+    const coList = ['CO1', 'CO2', 'CO3', 'CO4', 'CO5'];
+
+    let qCounter = 0;
+
+    function renderRow(q) {
+      const tr = document.createElement('tr');
+      tr.dataset.qid = q.id;
+      tr.innerHTML = `
+        <td class="text-center">${q.index}</td>
+        <td><input class="form-control form-control-sm question-id" value="${q.qid}" /></td>
+        <td><input class="form-control form-control-sm question-text" value="${q.text}" /></td>
+        <td><input type="number" class="form-control form-control-sm q-marks" min="0" value="${q.marks}" /></td>
+        <td>
+          <select class="form-select form-select-sm q-co">
+            ${coList.map(c => `<option ${c===q.co?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-danger btn-delete">Del</button>
+        </td>
+      `;
+      // delete handler
+      tr.querySelector('.btn-delete').addEventListener('click', () => {
+        tr.remove();
+        refreshIndexes();
+      });
+      tableBody.appendChild(tr);
+    }
+
+    function refreshIndexes(){
+      Array.from(tableBody.querySelectorAll('tr')).forEach((tr, i) => {
+        tr.querySelector('td').textContent = i+1;
+      });
+    }
+
+    btnAddQ.addEventListener('click', (e) => {
+      e.preventDefault();
+      qCounter++;
+      const q = {
+        id: Date.now() + Math.random().toString(36).slice(2,6),
+        index: tableBody.querySelectorAll('tr').length + 1,
+        qid: `Q${qCounter}`,
+        text: `Question ${qCounter}`,
+        marks: 10,
+        co: coList[(qCounter-1) % coList.length]
+      };
+      renderRow(q);
+    });
+
+    btnSave.addEventListener('click', (e) => {
+      e.preventDefault();
+      const assessment = collectAssessment();
+      const blob = new Blob([JSON.stringify(assessment, null, 2)], {type: 'application/json'});
+      linkPreview.href = URL.createObjectURL(blob);
+      linkPreview.classList.remove('d-none');
+      // Optionally auto-download:
+      // linkPreview.click();
+      alert('Assessment preview ready — use the Download Preview JSON button to save locally.');
+    });
+
+    btnExportCSV.addEventListener('click', (e) => {
+      e.preventDefault();
+      const rows = Array.from(tableBody.querySelectorAll('tr')).map(tr => {
+        const qid = tr.querySelector('.question-id').value.trim();
+        const text = tr.querySelector('.question-text').value.trim();
+        const marks = tr.querySelector('.q-marks').value.trim();
+        return { qid, text, marks };
+      });
+
+      // Build CSV header: StudentID,StudentName,Q1,Q2,...
+      const header = ['StudentID','StudentName', ...rows.map(r => r.qid)];
+      // Example one student sample
+      const sampleRow = ['S001','Test Student', ...rows.map(r => Math.min( (r.marks || 0),  Math.round((r.marks||0)/2) ))];
+
+      const csv = [header.join(','), sampleRow.join(',')].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sample_marks.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    function collectAssessment(){
+      const assessName = document.getElementById('assessName').value.trim();
+      const assessDate = document.getElementById('assessDate').value;
+      const totalMarks = document.getElementById('totalMarks').value;
+      const questions = Array.from(tableBody.querySelectorAll('tr')).map((tr, idx) => ({
+        index: idx+1,
+        qid: tr.querySelector('.question-id').value.trim(),
+        text: tr.querySelector('.question-text').value.trim(),
+        marks: Number(tr.querySelector('.q-marks').value) || 0,
+        co: tr.querySelector('.q-co').value
+      }));
+      return { assessName, assessDate, totalMarks: Number(totalMarks), questions };
+    }
+
+    // Seed with 3 sample questions
+    for (let i=0;i<3;i++) btnAddQ.click();
+  });
+</script>
+{% endblock %}

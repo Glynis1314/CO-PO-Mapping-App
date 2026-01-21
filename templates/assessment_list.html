@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Assessments — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">
+    {% include "components/sidebar_teacher.html" %}
+  </div>
+
+  <div class="col-md-9">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>Assessments</h3>
+      <a class="btn btn-sm btn-success" href="/teacher/create-assessment/">+ New Assessment</a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <table class="table table-sm">
+          <thead><tr><th>#</th><th>Name</th><th>Date</th><th>Questions</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Midterm CS101</td><td>2025-09-15</td><td>10</td>
+              <td><a class="btn btn-sm btn-outline-primary" href="/teacher/upload-marks/">Upload Marks</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

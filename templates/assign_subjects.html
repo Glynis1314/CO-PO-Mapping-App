@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Assign Subjects — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">
+    {% include "components/sidebar_hod.html" %}
+  </div>
+
+  <div class="col-md-9">
+    <h3>Assign Subjects to Teachers</h3>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form id="assignForm" class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">Subject</label>
+            <select id="selSubject" class="form-select">
+              <option value="CS101">CS101 — Computer Science Fundamentals</option>
+              <option value="DBMS">CS202 — DBMS</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Teacher</label>
+            <select id="selTeacher" class="form-select">
+              <option>Dr. A</option>
+              <option>Ms. B</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary" id="btnAssign">Assign</button>
+          </div>
+        </form>
+
+        <hr>
+
+        <h6>Current Assignments</h6>
+        <ul id="assignList" class="list-group">
+          <li class="list-group-item">CS101 → Dr. A</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.getElementById('btnAssign').addEventListener('click', e => {
+  e.preventDefault();
+  const subject = document.getElementById('selSubject').value;
+  const teacher = document.getElementById('selTeacher').value;
+  const ul = document.getElementById('assignList');
+  const li = document.createElement('li');
+  li.className = 'list-group-item';
+  li.textContent = `${subject} → ${teacher}`;
+  ul.appendChild(li);
+  alert('Assigned.');
+});
+</script>
+{% endblock %}

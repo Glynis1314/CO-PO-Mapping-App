@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Import Samples — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_teacher.html" %}</div>
+  <div class="col-md-9">
+    <h3>Download / View Import Samples</h3>
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <p class="small text-muted">Download these sample files to prepare your uploads.</p>
+        <a class="btn btn-outline-primary" href="/samples/sample_marks.csv" download>Sample Marks CSV</a>
+        <a class="btn btn-outline-primary" href="/samples/sample_co_po_mapping.csv" download>Sample CO→PO Mapping</a>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Sample CSV format (example)</h6>
+        <pre class="small">StudentID,StudentName,Q1,Q2,Q3,...
+S001,John Doe,8,7,9
+S002,Jane Doe,9,6,8</pre>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

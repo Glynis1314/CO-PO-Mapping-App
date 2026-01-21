@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Upload Marks — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_teacher.html" %}</div>
+  <div class="col-md-9">
+    <h3>Upload Marks (CSV)</h3>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <p class="small text-muted">Upload a CSV where columns are: StudentID, StudentName, Q1, Q2, ... (question IDs must match defined assessment question IDs).</p>
+
+        <div class="mb-3">
+          <input class="form-control" id="fileInput" type="file" accept=".csv" />
+        </div>
+
+        <div id="previewArea" class="table-responsive" style="display:none;">
+          <h6>Preview</h6>
+          <table class="table table-sm" id="previewTable"></table>
+          <button id="btnCompute" class="btn btn-primary">Compute CO Attainment (Preview)</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultsCard" style="display:none;">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5>Computed (Sample) — CO Attainment</h5>
+          <div id="computedResults"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% block extra_js %}
+    {% endblock %}
+<script>
+/* Simple CSV parser (prototype only) */
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).map(l => l.split(','));
+  const headers = lines.shift().map(h => h.trim());
+  const rows = lines.map(r => {
+    const obj = {};
+    for (let i=0;i<headers.length;i++) obj[headers[i]] = (r[i]||'').trim();
+    return obj;
+  });
+  return { headers, rows };
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const parsed = parseCSV(reader.result);
+    const table = document.getElementById('previewTable');
+    table.innerHTML = '';
+    // header
+    const thead = document.createElement('thead'), thr = document.createElement('tr');
+    parsed.headers.forEach(h => { const th = document.createElement('th'); th.textContent = h; thr.appendChild(th); });
+    thead.appendChild(thr); table.appendChild(thead);
+    // body
+    const tbody = document.createElement('tbody');
+    parsed.rows.slice(0,10).forEach(row => {
+      const tr = document.createElement('tr');
+      parsed.headers.forEach(h => { const td = document.createElement('td'); td.textContent = row[h]; tr.appendChild(td); });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    document.getElementById('previewArea').style.display = '';
+    // store parsed for compute button
+    window._lastParsedCSV = parsed;
+  };
+  reader.readAsText(f);
+});
+
+document.getElementById('btnCompute').addEventListener('click', () => {
+  const parsed = window._lastParsedCSV;
+  if (!parsed) return alert('No CSV parsed.');
+  // prototype: assume mapping Qx -> CO1..COn cyclically and compute averages
+  const qCols = parsed.headers.filter(h => /^Q/i.test(h));
+  const coAgg = {};
+  parsed.rows.forEach(r => {
+    qCols.forEach((q,i) => {
+      const val = Number(r[q]) || 0;
+      const co = 'CO' + (((i)%4)+1); // sample mapping
+      coAgg[co] = coAgg[co] || {total:0, count:0, maxPerQ:10};
+      coAgg[co].total += val;
+      coAgg[co].count += 1;
+    });
+  });
+  // compute % assuming max per question 10
+  const resultsDiv = document.getElementById('computedResults');
+  resultsDiv.innerHTML = '';
+  for (const co in coAgg) {
+    const avg = coAgg[co].total / coAgg[co].count;
+    const perc = Math.round((avg / coAgg[co].maxPerQ) * 100);
+    resultsDiv.innerHTML += `<div>${co}: <strong>${perc}%</strong></div>`;
+  }
+  document.getElementById('resultsCard').style.display = '';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Attainment Report — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_hod.html" %}</div>
+  <div class="col-md-9">
+    <h3>Attainment Report</h3>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <label class="form-label">Academic Year / Semester</label>
+            <select class="form-select">
+              <option>2025-26 ODD</option>
+              <option>2025-26 EVEN</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Subject</label>
+            <select class="form-select">
+              <option>CS101</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 align-self-end">
+            <button class="btn btn-primary">Generate Report</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sample results -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h6>CO Attainment</h6>
+        <table class="table table-sm">
+          <thead><tr><th>CO</th><th>Attainment %</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>CO1</td><td>78%</td><td><span class="badge bg-success">OK</span></td></tr>
+            <tr><td>CO2</td><td>62%</td><td><span class="badge bg-warning">Below</span></td></tr>
+            <tr><td>CO3</td><td>55%</td><td><span class="badge bg-danger">Gap</span></td></tr>
+          </tbody>
+        </table>
+
+        <hr>
+        <h6>PO Attainment</h6>
+        <table class="table table-sm">
+          <thead><tr><th>PO</th><th>Attainment %</th></tr></thead>
+          <tbody>
+            <tr><td>PO1</td><td>70%</td></tr>
+            <tr><td>PO2</td><td>64%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary">Download CSV</button>
+      <button class="btn btn-outline-secondary">Download Excel</button>
+      <button class="btn btn-outline-primary">View Gap Analysis</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

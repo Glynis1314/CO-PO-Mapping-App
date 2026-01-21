@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}CO Mapping — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_teacher.html" %}</div>
+  <div class="col-md-9">
+    <h3>Define Course Outcomes (COs)</h3>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <form id="coForm" class="row g-3">
+          <div class="col-md-4"><input class="form-control" id="coId" placeholder="CO ID (e.g., CO1)"></div>
+          <div class="col-md-6"><input class="form-control" id="coText" placeholder="Short description"></div>
+          <div class="col-md-2"><button class="btn btn-primary" id="btnAddCO">Add</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>CO List</h6>
+        <ul id="coList" class="list-group">
+          <li class="list-group-item">CO1 — Understand basic concepts</li>
+          <li class="list-group-item">CO2 — Apply algorithms</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+    {% endblock %}
+<script>
+document.getElementById('btnAddCO').addEventListener('click', e => {
+  e.preventDefault();
+  const id = document.getElementById('coId').value.trim();
+  const txt = document.getElementById('coText').value.trim();
+  if (!id || !txt) return alert('Enter CO id and description');
+  const ul = document.getElementById('coList');
+  const li = document.createElement('li'); li.className = 'list-group-item';
+  li.textContent = `${id} — ${txt}`;
+  ul.appendChild(li);
+  document.getElementById('coForm').reset();
+});
+</script>
+{% endblock %}

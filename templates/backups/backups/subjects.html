@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Subjects — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">
+    {% include "components/sidebar_hod.html" %}
+  </div>
+
+  <div class="col-md-9">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>Subjects</h3>
+      <button class="btn btn-sm btn-success" id="btnAddSubject">+ Add Subject</button>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <table class="table table-sm" id="subjectsTable">
+          <thead>
+            <tr><th>#</th><th>Code</th><th>Name</th><th>Semester</th><th>Assigned To</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td><td>CS101</td><td>Computer Science Fundamentals</td><td>2025-26 ODD</td><td>Dr. A</td>
+              <td><a class="btn btn-sm btn-outline-secondary" href="{% url 'assign_subjects' %}">Assign</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add Subject Modal -->
+    <div class="modal fade" id="modalAddSubject" tabindex="-1">
+      <div class="modal-dialog">
+        <form class="modal-content" id="formAddSubject">
+          <div class="modal-header"><h5 class="modal-title">Add Subject</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+          <div class="modal-body">
+            <div class="mb-3"><label class="form-label">Code</label><input name="code" class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Name</label><input name="name" class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Semester / Academic Year</label><input name="sem" class="form-control" placeholder="2025-26 ODD"></div>
+          </div>
+          <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add</button></div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnAddSubject').addEventListener('click', () => {
+    new bootstrap.Modal(document.getElementById('modalAddSubject')).show();
+  });
+
+  document.getElementById('formAddSubject').addEventListener('submit', e => {
+    e.preventDefault();
+    const form = e.target;
+    const code = form.code.value.trim(), name = form.name.value.trim(), sem = form.sem.value.trim();
+    if (!code || !name) return alert('Enter code and name.');
+    const tbody = document.querySelector('#subjectsTable tbody');
+    const idx = tbody.rows.length + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${idx}</td><td>${code}</td><td>${name}</td><td>${sem}</td><td>Unassigned</td><td><a class="btn btn-sm btn-outline-secondary" href="{% url 'assign_subjects' %}">Assign</a></td>`;
+    tbody.appendChild(tr);
+    bootstrap.Modal.getInstance(document.getElementById('modalAddSubject')).hide();
+    form.reset();
+  });
+});
+</script>
+{% endblock %}

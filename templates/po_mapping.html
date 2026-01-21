@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}CO → PO Mapping — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_teacher.html" %}</div>
+  <div class="col-md-9">
+    <h3>Map COs to Program Outcomes (POs)</h3>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form id="mapForm" class="row g-3 align-items-center">
+          <div class="col-md-3">
+            <label class="form-label">CO</label>
+            <select id="selCO" class="form-select">
+              <option>CO1</option><option>CO2</option><option>CO3</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">PO</label>
+            <select id="selPO" class="form-select">
+              <option>PO1</option><option>PO2</option><option>PO3</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Weight</label>
+            <input class="form-control" id="poWeight" placeholder="e.g., 1 (low) to 3 (high)">
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary" id="btnMap">Map</button>
+          </div>
+        </form>
+
+        <hr>
+        <h6>Mappings</h6>
+        <ul id="mapList" class="list-group">
+          <li class="list-group-item">CO1 → PO1 (weight 2)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+    {% endblock %}
+<script>
+document.getElementById('btnMap').addEventListener('click', e => {
+  e.preventDefault();
+  const co = document.getElementById('selCO').value;
+  const po = document.getElementById('selPO').value;
+  const w = document.getElementById('poWeight').value || '1';
+  const ul = document.getElementById('mapList');
+  const li = document.createElement('li'); li.className='list-group-item';
+  li.textContent = `${co} → ${po} (weight ${w})`;
+  ul.appendChild(li);
+});
+</script>
+{% endblock %}

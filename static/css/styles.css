@@ -1,0 +1,200 @@
+/* ============================================================
+   DBIT Attainment System — Full Stylesheet (Dark Sidebar Layout)
+   ============================================================ */
+
+/* ------------------------------
+   Global layout + variables
+------------------------------ */
+
+:root {
+  --sidebar-width: 240px;       /* Sidebar width */
+  --navbar-height: 68px;        /* Height of fixed top navbar */
+  --sidebar-bg-top: #0b2640;    /* Gradient start */
+  --sidebar-bg-bottom: #092032; /* Gradient end */
+  --sidebar-text: rgba(230,238,248,0.95);
+  --sidebar-text-muted: rgba(230,238,248,0.70);
+  --sidebar-hover: rgba(255,255,255,0.06);
+}
+
+/* body and html */
+html, body {
+  height: 100%;
+  background: #f5f6fa;  /* Light clean background */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: #1e1e1e;
+}
+
+body {
+  padding-top: var(--navbar-height); /* space for fixed navbar */
+}
+
+
+/* ------------------------------
+   FIXED DARK SIDEBAR
+------------------------------ */
+
+.sidebar {
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--navbar-height));
+  background: linear-gradient(180deg, var(--sidebar-bg-top), var(--sidebar-bg-bottom));
+  padding: 1.2rem 0.75rem;
+  z-index: 1020;
+  color: var(--sidebar-text);
+  overflow-y: auto;
+  box-shadow: 2px 0 12px rgba(2,6,23,0.12);
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar .nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar .nav-item {
+  list-style: none;
+}
+
+
+.sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--sidebar-text);
+  text-decoration: none;
+
+  padding: 10px 14px;
+  border-radius: 8px;
+
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+
+/* Icon styling */
+.sidebar .nav-link .bi {
+  font-size: 1.25rem;
+  color: var(--sidebar-text);
+}
+
+/* Hover */
+.sidebar .nav-link:hover {
+  background: var(--sidebar-hover);
+  transform: translateX(4px);
+  color: #ffffff;
+}
+
+/* ACTIVE link */
+.sidebar .nav-link.active {
+  background: rgba(255,255,255,0.08);
+  box-shadow: inset 3px 0 0 #4da3ff;
+  color: #ffffff;
+}
+
+.sidebar .nav-link.active .bi {
+  color: #a9d6ff;
+}
+
+/* Sidebar footer */
+.sidebar .sidebar-footer {
+  margin-top: auto;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.85rem;
+  color: var(--sidebar-text-muted);
+}
+
+
+/* ------------------------------
+   MAIN CONTENT OFFSET
+------------------------------ */
+
+/* This pushes the content right to make space for fixed sidebar */
+.container-main-offset {
+  margin-left: var(--sidebar-width);
+}
+
+.main-content {
+  padding: 1rem;
+}
+
+
+/* ------------------------------
+   RESPONSIVE BEHAVIOR
+------------------------------ */
+
+@media (max-width: 992px) {
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    top: 0;
+    left: 0;
+    padding: 1rem;
+  }
+
+  .container-main-offset {
+    margin-left: 0;
+  }
+}
+
+
+/* ------------------------------
+   CARDS + TABLES + UI ELEMENTS
+------------------------------ */
+
+.card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.table thead th {
+  background: #f0f2f7;
+  border-bottom: 2px solid #dfe3ea;
+  font-weight: 600;
+}
+
+.badge {
+  font-size: 0.72rem;
+  padding: 0.45em 0.7em;
+}
+
+
+/* ------------------------------
+   NAVBAR STYLE (top)
+------------------------------ */
+
+.navbar {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.navbar-brand {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+
+/* ------------------------------
+   UTILITIES
+------------------------------ */
+
+.text-muted-small {
+  color: #6f7890;
+  font-size: 0.85rem;
+}
+
+.brand-accent {
+  color: #a9d6ff;
+  font-weight: 700;
+}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="row">
+
+  <!-- Sidebar -->
+  <div class="col-md-3">
+    {% include "components/sidebar_teacher.html" %}
+  </div>
+
+  <!-- Main content -->
+  <div class="col-md-9">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">Teacher Dashboard</h3>
+        <div class="text-muted small">
+          Manage your assessments, upload marks, map COs, and check attainment.
+        </div>
+      </div>
+      <a href="/teacher/create-assessment/" class="btn btn-success">
+        + Create Assessment
+      </a>
+    </div>
+
+    <!-- Quick stats -->
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body text-center">
+            <div class="h2 mb-0">7</div>
+            <div class="small text-muted">Assessments Created</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body text-center">
+            <div class="h2 mb-0">3</div>
+            <div class="small text-muted">Pending Marks Upload</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body text-center">
+            <div class="h2 mb-0 text-danger">2</div>
+            <div class="small text-muted">COs Below Threshold</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent assessments -->
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h5 class="card-title">Recent Assessments</h5>
+
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Assessment</th>
+              <th>Date</th>
+              <th>Questions</th>
+              <th>Marks Upload</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Midterm – CS101</td>
+              <td>2025-09-15</td>
+              <td>10</td>
+              <td>
+                <a href="/teacher/upload-marks/" class="btn btn-sm btn-outline-primary">Upload</a>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Quiz 1 – DBMS</td>
+              <td>2025-09-20</td>
+              <td>6</td>
+              <td>
+                <a href="/teacher/upload-marks/" class="btn btn-sm btn-outline-primary">Upload</a>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Assignment – Python</td>
+              <td>2025-09-22</td>
+              <td>5</td>
+              <td>
+                <span class="badge bg-success">Completed</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="text-end">
+          <a href="/teacher/assessments/" class="btn btn-outline-secondary btn-sm">View All</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action cards -->
+    <div class="row g-3 mt-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6>Upload Marks</h6>
+            <p class="small text-muted">Upload CSV or Excel marks for your assessments.</p>
+            <a href="/teacher/upload-marks/" class="btn btn-outline-primary btn-sm">Upload</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6>CO Mapping</h6>
+            <p class="small text-muted">Define COs and map each question to corresponding CO.</p>
+            <a href="/teacher/co-mapping/" class="btn btn-outline-primary btn-sm">Open</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6>CO → PO Mapping</h6>
+            <p class="small text-muted">Link Course Outcomes to Program Outcomes.</p>
+            <a href="/teacher/po-mapping/" class="btn btn-outline-primary btn-sm">Open</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evidence -->
+    <div class="card shadow-sm mt-4 mb-5">
+      <div class="card-body">
+        <h6>Evidence</h6>
+        <p class="small text-muted">Upload supporting files for CO/PO attainment.</p>
+        <a href="/evidence/" class="btn btn-outline-secondary btn-sm">Manage Evidence</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

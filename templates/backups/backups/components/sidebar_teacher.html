@@ -1,0 +1,15 @@
+<!-- components/sidebar_teacher.html -->
+<nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse" id="sidebarMenu">
+  <div class="position-sticky pt-3">
+    <ul class="nav flex-column">
+      <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_teacher' %}">Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'create_assessment' %}">Create Assessment</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'assessment_list' %}">Assessments</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'upload_marks' %}">Upload Marks</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'co_mapping' %}">CO Mapping</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'po_mapping' %}">CO → PO Mapping</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'thresholds' %}">Thresholds</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'import_sample' %}">Import Samples</a></li>
+    </ul>
+  </div>
+</nav>

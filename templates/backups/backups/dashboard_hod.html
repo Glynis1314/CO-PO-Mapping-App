@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}HOD Dashboard — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+  <div>
+    <h3 class="mb-0">HOD Dashboard</h3>
+    <div class="text-muted small">Department overview — create academic years, assign subjects and monitor attainment</div>
+  </div>
+  <div class="ms-auto">
+    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#modalCreateYear">
+      <i class="bi bi-calendar-plus"></i> Create Academic Year
+    </button>
+    <a class="btn btn-outline-primary" href="{% url 'assign_subjects' %}">Assign Subjects</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Academic Years</h5>
+        <p class="small text-muted">Manage academic years (ODD/EVEN semesters).</p>
+        <ul class="list-group list-group-flush" id="yearList">
+          <!-- Sample items -->
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            2025-26 ODD
+            <span>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'subjects' %}">Open</a>
+            </span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            2025-26 EVEN
+            <span>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'subjects' %}">Open</a>
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Quick Actions</h5>
+        <div class="d-grid gap-2">
+          <a class="btn btn-outline-primary" href="{% url 'assign_subjects' %}">Assign Subjects → Teachers</a>
+          <a class="btn btn-outline-primary" href="{% url 'settings_users' %}">Manage Users</a>
+          <a class="btn btn-outline-primary" href="{% url 'attainment_report' %}">View Reports</a>
+          <a class="btn btn-outline-secondary" href="{% url 'evidence_upload' %}">View Evidence</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Department Stats</h5>
+        <div class="small text-muted mb-2">Snapshot of assessments & flagged gaps</div>
+
+        <div class="row text-center">
+          <div class="col-6">
+            <div class="h3 mb-0">42</div>
+            <div class="small text-muted">Assessments</div>
+          </div>
+          <div class="col-6">
+            <div class="h3 mb-0 text-danger">5</div>
+            <div class="small text-muted">COs below threshold</div>
+          </div>
+        </div>
+
+        <hr class="my-3">
+
+        <a class="small" href="{% url 'attainment_report' %}">Open full attainment report</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent activity / placeholders -->
+<div class="row mt-4">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Recent Activity</h5>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">Teacher A uploaded marks for "Midterm CS101" — <small class="text-muted">2 hours ago</small></li>
+          <li class="list-group-item">CO mapping updated for "DBMS" — <small class="text-muted">1 day ago</small></li>
+          <li class="list-group-item">New evidence added for "SE Project Assessments" — <small class="text-muted">3 days ago</small></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Quick Notes</h6>
+        <p class="small text-muted mb-0">Remember to finalize subject assignments before assessments start. Download sample CSV format for marks uploads from the "Teacher" dashboard.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Academic Year Modal -->
+<div class="modal fade" id="modalCreateYear" tabindex="-1" aria-labelledby="modalCreateYearLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formCreateYear" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCreateYearLabel">Create Academic Year</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="ayName" class="form-label">Name (e.g., 2025-26 ODD)</label>
+          <input id="ayName" name="ayName" class="form-control" placeholder="2025-26 ODD" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="ayStart" class="form-label">Start Date</label>
+          <input id="ayStart" name="ayStart" type="date" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label for="ayNotes" class="form-label">Notes</label>
+          <textarea id="ayNotes" name="ayNotes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Small client-side prototype behavior: add created academic year to the list
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('formCreateYear');
+    form?.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const name = document.getElementById('ayName').value.trim();
+      if (!name) return alert('Please enter name for academic year.');
+      const list = document.getElementById('yearList');
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `${name} <span><a class="btn btn-sm btn-outline-secondary" href="{% url 'subjects' %}">Open</a></span>`;
+      list.prepend(li);
+      // reset + hide modal
+      form.reset();
+      const modalEl = document.getElementById('modalCreateYear');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    });
+  });
+</script>
+{% endblock %}
