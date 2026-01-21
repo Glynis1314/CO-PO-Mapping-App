@@ -8,6 +8,10 @@ urlpatterns = [
     # -------------------------
     path('', TemplateView.as_view(template_name="index.html"), name="index"),
 
+    path('login/',
+          TemplateView.as_view(template_name="auth/login.html"),
+          name="login"),
+
     path('hod/dashboard/',
          TemplateView.as_view(template_name="dashboard_hod.html"),
          name="dashboard_hod"),
@@ -19,7 +23,7 @@ urlpatterns = [
     path('principal/dashboard/',
          TemplateView.as_view(template_name="dashboard_principal.html"),
          name="dashboard_principal"),
-
+     
     # -------------------------
     # HOD pages
     # -------------------------
