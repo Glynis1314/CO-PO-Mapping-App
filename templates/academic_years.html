@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Academic Years — Attainment Prototype{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-md-3">
+      {% include "components/sidebar_hod.html" %}
+    </div>
+
+    <div class="col-md-9">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Manage Academic Years</h3>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addYearModal">
+          <i class="bi bi-plus-circle"></i> Create New Year
+        </button>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <p class="text-muted small">Academic years define the cycle for course delivery and attainment calculation[cite: 536, 1102].</p>
+          
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Academic Year</th>
+                <th>Semester</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="yearTableBody">
+              <tr>
+                <td>2022-23</td>
+                <td>Even Semester</td>
+                <td><span class="badge bg-secondary">Archived</span></td>
+                <td><button class="btn btn-sm btn-outline-primary">View Reports</button></td>
+              </tr>
+              <tr>
+                <td>2025-26</td>
+                <td>Odd Semester</td>
+                <td><span class="badge bg-success">Active</span></td>
+                <td><button class="btn btn-sm btn-outline-primary">Manage</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addYearModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Academic Year</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="yearForm">
+          <div class="mb-3">
+            <label class="form-label">Year Range</label>
+            <input type="text" id="yearRange" class="form-control" placeholder="e.g. 2026-27">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Semester</label>
+            <select id="semType" class="form-select">
+              <option>Odd Semester</option>
+              <option>Even Semester</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="saveYearBtn">Save Year</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('saveYearBtn').addEventListener('click', function() {
+    const year = document.getElementById('yearRange').value;
+    const sem = document.getElementById('semType').value;
+    
+    if (year) {
+      const tbody = document.getElementById('yearTableBody');
+      const row = `<tr>
+        <td>${year}</td>
+        <td>${sem}</td>
+        <td><span class="badge bg-primary">New</span></td>
+        <td><button class="btn btn-sm btn-outline-primary">Manage</button></td>
+      </tr>`;
+      tbody.innerHTML += row;
+      
+      // Close modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addYearModal'));
+      modal.hide();
+      alert('Academic Year Created.');
+    }
+  });
+</script>
+{% endblock %}
