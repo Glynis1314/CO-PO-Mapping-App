@@ -16,10 +16,14 @@
   --sidebar-hover: rgba(255,255,255,0.06);
 }
 
-/* body and html */
+/* --------------------------------
+   GLOBAL FIX: prevent horizontal scroll
+-------------------------------- */
+
 html, body {
   height: 100%;
-  background: #f5f6fa;  /* Light clean background */
+  overflow-x: hidden;           /* 🔥 removes horizontal scrollbar */
+  background: #f5f6fa;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   color: #1e1e1e;
 }
@@ -60,24 +64,20 @@ body {
   list-style: none;
 }
 
-
 .sidebar .nav-link {
   display: flex;
   align-items: center;
   gap: 12px;
-
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--sidebar-text);
   text-decoration: none;
-
   padding: 10px 14px;
   border-radius: 8px;
-
   transition: background 0.12s ease, transform 0.12s ease;
 }
 
-/* Icon styling */
+/* Icons */
 .sidebar .nav-link .bi {
   font-size: 1.25rem;
   color: var(--sidebar-text);
@@ -90,7 +90,7 @@ body {
   color: #ffffff;
 }
 
-/* ACTIVE link */
+/* Active link */
 .sidebar .nav-link.active {
   background: rgba(255,255,255,0.08);
   box-shadow: inset 3px 0 0 #4da3ff;
@@ -111,12 +111,13 @@ body {
 
 
 /* ------------------------------
-   MAIN CONTENT OFFSET
+   MAIN CONTENT OFFSET (FIXED)
 ------------------------------ */
 
-/* This pushes the content right to make space for fixed sidebar */
+/* 🔥 Key fix: prevent 100% + sidebar width overflow */
 .container-main-offset {
   margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
 }
 
 .main-content {
@@ -140,6 +141,7 @@ body {
 
   .container-main-offset {
     margin-left: 0;
+    width: 100%;
   }
 }
 
