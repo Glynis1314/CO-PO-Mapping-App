@@ -9,17 +9,20 @@
 
     <div class="card shadow-sm mb-3">
       <div class="card-body">
-        <p class="small text-muted">Upload a CSV where columns are: StudentID, StudentName, Q1, Q2, ... (question IDs must match defined assessment question IDs).</p>
+        <p class="small text-muted">Upload marks using the fixed format: RollNo, Q1, Q2, Q3... (Question IDs must match assessment component IDs).</p>
 
-        <div class="mb-3">
-          <input class="form-control" id="fileInput" type="file" accept=".csv" />
-        </div>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit" class="btn btn-primary">Upload & Validate</button>
+        </form>
 
-        <div id="previewArea" class="table-responsive" style="display:none;">
-          <h6>Preview</h6>
-          <table class="table table-sm" id="previewTable"></table>
-          <button id="btnCompute" class="btn btn-primary">Compute CO Attainment (Preview)</button>
-        </div>
+        {% if messages %}
+          {% for message in messages %}
+            <div class="mt-3 alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
       </div>
     </div>
 

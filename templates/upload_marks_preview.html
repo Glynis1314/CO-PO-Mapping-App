@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load dict_extras %}
+{% block title %}Upload Preview — Attainment{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_teacher.html" %}</div>
+  <div class="col-md-9">
+    <h3>Upload Preview</h3>
+
+    <p><strong>File:</strong> {{ marks_upload.file.name }} &nbsp; <strong>Status:</strong> {{ marks_upload.status }}</p>
+
+    {% if marks_upload.error_report %}
+      <div class="alert alert-danger"><pre>{{ marks_upload.error_report }}</pre></div>
+    {% endif %}
+
+    {% if result.errors %}
+      <div class="alert alert-warning">Validation issues found. <ul>{% for e in result.errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+    {% endif %}
+
+    <h5>Header</h5>
+    <pre>{{ result.headers }}</pre>
+
+    <h5>Sample Rows (first 200)</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered">
+        <thead>
+          <tr>{% for h in result.headers %}<th>{{ h }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+          {% for row in result.sample_rows %}
+            <tr>{% for h in result.headers %}<td>{{ row|get_item:h }}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if marks_upload.status == 'VALIDATED' %}
+      <form method="post" action="{% url 'marks_upload_confirm' marks_upload.id %}">{% csrf_token %}
+        <button class="btn btn-success">Confirm Import (Run in background)</button>
+      </form>
+    {% endif %}
+
+    {% if marks_upload.status == 'IMPORTED' %}
+      <div class="alert alert-success">Import completed. Metadata: <pre>{{ marks_upload.metadata }}</pre></div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// helper to access dict keys in templates
+</script>
+{% endblock %}

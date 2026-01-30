@@ -1,5 +1,6 @@
 from django.urls import path
 from django.views.generic import TemplateView
+from . import views
 
 urlpatterns = [
 
@@ -65,8 +66,16 @@ urlpatterns = [
          name="assessment_list"),
 
     path('teacher/upload-marks/',
-         TemplateView.as_view(template_name="upload_marks.html"),
-         name="upload_marks"),
+         views.upload_marks,
+         name='upload_marks'),
+
+    path('teacher/upload-marks/preview/<int:upload_id>/',
+         views.marks_upload_preview,
+         name='marks_upload_preview'),
+
+    path('teacher/upload-marks/confirm/<int:upload_id>/',
+         views.marks_upload_confirm,
+         name='marks_upload_confirm'),
 
     path('teacher/co-mapping/',
          TemplateView.as_view(template_name="co_mapping.html"),
