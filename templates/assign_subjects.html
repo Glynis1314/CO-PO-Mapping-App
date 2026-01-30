@@ -1,60 +1,69 @@
 {% extends "base.html" %}
+
 {% block title %}Assign Subjects — Attainment Prototype{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-md-3">
-    {% include "components/sidebar_hod.html" %}
-  </div>
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-md-3">
+      {% include "components/sidebar_hod.html" %}
+    </div>
 
-  <div class="col-md-9">
-    <h3>Assign Subjects to Teachers</h3>
+    <div class="col-md-9">
+      <h3 class="mb-4">Assign Subjects to Teachers</h3>
 
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <form id="assignForm" class="row g-3 align-items-end">
-          <div class="col-md-4">
-            <label class="form-label">Subject</label>
-            <select id="selSubject" class="form-select">
-              <option value="CS101">CS101 — Computer Science Fundamentals</option>
-              <option value="DBMS">CS202 — DBMS</option>
-            </select>
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Teacher</label>
-            <select id="selTeacher" class="form-select">
-              <option>Dr. A</option>
-              <option>Ms. B</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-primary" id="btnAssign">Assign</button>
-          </div>
-        </form>
+        {% endfor %}
+      {% endif %}
 
-        <hr>
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <form method="POST" action="{% url 'assign_subject' %}" class="row g-3 align-items-end">
+            {% csrf_token %}
+            <div class="col-md-4">
+              <label class="form-label font-weight-bold">Subject</label>
+              <select name="course_id" class="form-select" required>
+                <option value="" selected disabled>Choose Subject...</option>
+                {% for course in courses %}
+                  <option value="{{ course.id }}">{{ course.code }} — {{ course.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label font-weight-bold">Teacher</label>
+              <select name="teacher_id" class="form-select" required>
+                <option value="" selected disabled>Choose Teacher...</option>
+                {% for teacher in teachers %}
+                  <option value="{{ teacher.id }}">{{ teacher.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-primary w-100">Assign</button>
+            </div>
+          </form>
 
-        <h6>Current Assignments</h6>
-        <ul id="assignList" class="list-group">
-          <li class="list-group-item">CS101 → Dr. A</li>
-        </ul>
+          <hr class="my-4">
+
+          <h6>Current Assignments</h6>
+          <ul class="list-group list-group-flush">
+            {% for assignment in assignments %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><strong>{{ assignment.course.code }}</strong> &rarr; {{ assignment.teacher.username }}</span>
+                <span class="badge bg-success rounded-pill">Active</span>
+              </li>
+            {% empty %}
+              <li class="list-group-item text-muted text-center italic">No assignments found for this cycle.</li>
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
   </div>
 </div>
-{% endblock %}
-{% block extra_js %}
-<script>
-document.getElementById('btnAssign').addEventListener('click', e => {
-  e.preventDefault();
-  const subject = document.getElementById('selSubject').value;
-  const teacher = document.getElementById('selTeacher').value;
-  const ul = document.getElementById('assignList');
-  const li = document.createElement('li');
-  li.className = 'list-group-item';
-  li.textContent = `${subject} → ${teacher}`;
-  ul.appendChild(li);
-  alert('Assigned.');
-});
-</script>
 {% endblock %}

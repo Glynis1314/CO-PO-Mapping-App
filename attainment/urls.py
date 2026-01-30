@@ -1,5 +1,8 @@
 from django.urls import path
 from django.views.generic import TemplateView
+from django.conf import settings
+from django.conf.urls.static import static
+from . import views
 
 urlpatterns = [
 
@@ -31,13 +34,13 @@ urlpatterns = [
          TemplateView.as_view(template_name="subjects.html"),
          name="subjects"),
 
-    path('assign-subjects/',
-         TemplateView.as_view(template_name="assign_subjects.html"),
-         name="assign_subjects"),
+     # Path for assigning and saving the assigned subjects 
+    path('assign-subjects/', views.assign_subjects_view, name='assign_subjects'),
+    path('assign-subjects/save/', views.assign_subject_action, name='assign_subject'),
 
-    path('academic-years/',
-         TemplateView.as_view(template_name="academic_years.html"),
-         name="academic_years"),
+     # Path for adding the academic year and create the year 
+    path('academic-years/', views.academic_years_list, name='academic_years_list'),
+    path('academic-years/create/', views.create_academic_year, name='create_academic_year'),
 
     path('settings/users/',
          TemplateView.as_view(template_name="settings_users.html"),
@@ -90,4 +93,4 @@ urlpatterns = [
     path('samples/',
          TemplateView.as_view(template_name="import_sample.html"),
          name="samples"),
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
