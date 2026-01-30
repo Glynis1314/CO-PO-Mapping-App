@@ -339,6 +339,9 @@ class GlobalConfig(models.Model):
 
     po_target_value = models.FloatField(default=2.5)
 
+    # Allow automatic creation of Student records during marks import
+    allow_student_auto_create = models.BooleanField(default=True, help_text="If True, unknown RollNos will create Student rows on import")
+
     locked = models.BooleanField(default=True, help_text="When True only Admin can change the record")
 
     updated_at = models.DateTimeField(auto_now=True)

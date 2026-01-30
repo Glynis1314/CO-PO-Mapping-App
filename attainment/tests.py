@@ -55,6 +55,12 @@ class MarksParserTests(TestCase):
         result = parse_marks_upload(mu.file, mu.assessment)
         self.assertIn('RollNo', result['headers'])
         self.assertEqual(result['sample_rows'][0][result['headers'][0]], 'R001')
+        # If any errors, ensure the errors CSV endpoint returns the file
+        if result['errors']:
+            errors_url = reverse('marks_upload_errors_csv', args=[mu.id])
+            resp = self.client.get(errors_url)
+            # when user is logged in as teacher, should get CSV or redirect if no invalid rows
+            self.assertIn(resp.status_code, [200, 302])
 
         # If validated, trigger import
         if mu.status == 'VALIDATED':

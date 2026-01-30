@@ -62,9 +62,14 @@ def parse_marks_upload(uploaded_file, assessment):
     components = AssessmentComponent.objects.filter(assessment=assessment)
     component_map = {c.component_number: c for c in components}
 
-    # Check mapping completeness (every component has linked CO by DB design)
+    # Check mapping completeness
     if not components.exists():
         errors.append('Assessment has no components defined')
+
+    # Ensure all components are mapped to a CourseOutcome
+    unmapped = [c.component_number for c in components if not c.course_outcome]
+    if unmapped:
+        errors.append(f'Assessment components without CO mapping: {unmapped}')
 
     # Validate that all question IDs in header exist in components
     missing_components = [h for h in header[1:] if h not in component_map]
@@ -73,6 +78,7 @@ def parse_marks_upload(uploaded_file, assessment):
 
     sample_rows = []
     row_errors = []
+    invalid_rows = []
     total_students = 0
 
     for r_idx, row in enumerate(rows[1:1+200]):  # preview only first 200
@@ -84,6 +90,7 @@ def parse_marks_upload(uploaded_file, assessment):
         roll = row[0]
         # Include both a normalized 'roll' key and the exact header key (e.g., 'RollNo') so templates can use either
         row_dict = {header[0]: roll, 'roll': roll}
+        row_row_errors = []
         for col_idx, colname in enumerate(header[1:], start=1):
             val = row[col_idx] if col_idx < len(row) else ''
             if val == '':
@@ -98,9 +105,15 @@ def parse_marks_upload(uploaded_file, assessment):
             if colname in component_map and val_num is not None:
                 comp = component_map[colname]
                 if val_num > comp.max_marks:
-                    row_errors.append(f'Row {r_idx+2} ({roll}): Column {colname} value {val_num} exceeds max {comp.max_marks}')
+                    msg = f'Row {r_idx+2} ({roll}): Column {colname} value {val_num} exceeds max {comp.max_marks}'
+                    row_errors.append(msg)
+                    row_row_errors.append(msg)
             elif colname in component_map and val_num is None:
-                row_errors.append(f'Row {r_idx+2} ({roll}): Column {colname} contains non-numeric value')
+                msg = f'Row {r_idx+2} ({roll}): Column {colname} contains non-numeric value'
+                row_errors.append(msg)
+                row_row_errors.append(msg)
+        if row_row_errors:
+            invalid_rows.append({ 'row_number': r_idx+2, 'roll': roll, 'errors': row_row_errors, 'values': row_dict})
         sample_rows.append(row_dict)
 
     # Build metadata
@@ -108,6 +121,7 @@ def parse_marks_upload(uploaded_file, assessment):
         'header': header,
         'component_list': list(component_map.keys()),
         'sample_count': total_students,
+        'invalid_rows': invalid_rows,
     }
 
     validated = not errors and not row_errors

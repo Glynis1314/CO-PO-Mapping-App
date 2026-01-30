@@ -80,6 +80,39 @@ def marks_upload_preview(request, upload_id):
 
 
 @login_required
+def marks_upload_errors_csv(request, upload_id):
+    mu = get_object_or_404(MarksUpload, id=upload_id)
+    if request.user != mu.uploaded_by and not request.user.is_superuser:
+        messages.error(request, 'Unauthorized')
+        return redirect('index')
+
+    metadata = mu.metadata or {}
+    invalid = metadata.get('invalid_rows') or []
+    if not invalid:
+        messages.error(request, 'No invalid rows available')
+        return redirect('marks_upload_preview', upload_id=mu.id)
+
+    import csv
+    from django.http import HttpResponse
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="marks_upload_{mu.id}_errors.csv"'
+
+    writer = csv.writer(response)
+    # header row
+    headers = metadata.get('header', [])
+    writer.writerow(['row_number', 'roll'] + headers[1:] + ['errors'])
+    for ir in invalid:
+        row_vals = [ir.get('row_number'), ir.get('roll')]
+        values = ir.get('values', {})
+        for h in headers[1:]:
+            row_vals.append(values.get(h, ''))
+        row_vals.append('; '.join(ir.get('errors', [])))
+        writer.writerow(row_vals)
+
+    return response
+
+
+@login_required
 def marks_upload_confirm(request, upload_id):
     mu = get_object_or_404(MarksUpload, id=upload_id)
     if request.method != 'POST':

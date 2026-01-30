@@ -15,7 +15,9 @@
     {% endif %}
 
     {% if result.errors %}
-      <div class="alert alert-warning">Validation issues found. <ul>{% for e in result.errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+      <div class="alert alert-warning">Validation issues found. <ul>{% for e in result.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+      <p><a class="btn btn-outline-secondary" href="{% url 'marks_upload_errors_csv' marks_upload.id %}">Download invalid rows CSV</a></p>
+      </div>
     {% endif %}
 
     <h5>Header</h5>

@@ -73,6 +73,10 @@ urlpatterns = [
          views.marks_upload_preview,
          name='marks_upload_preview'),
 
+    path('teacher/upload-marks/preview/<int:upload_id>/errors.csv',
+         views.marks_upload_errors_csv,
+         name='marks_upload_errors_csv'),
+
     path('teacher/upload-marks/confirm/<int:upload_id>/',
          views.marks_upload_confirm,
          name='marks_upload_confirm'),
