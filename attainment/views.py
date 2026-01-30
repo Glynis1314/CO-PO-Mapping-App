@@ -3,9 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
 
-from .forms import MarksUploadForm
-from .models import MarksUpload, SemesterLock, AuditLog
+from .forms import MarksUploadForm, SurveyUploadForm
+from .models import MarksUpload, SemesterLock, AuditLog, SurveyUpload, COIndirectAttainment, POIndirectAttainment, CourseOutcome, ProgramOutcome
 from .utils.marks_parser import MarksValidationError, parse_marks_upload
+from .utils.survey_parser import SurveyValidationError, parse_survey_csv
 from .tasks import import_marks_background
 
 
@@ -52,6 +53,75 @@ def upload_marks(request):
     else:
         form = MarksUploadForm(user=request.user)
     return render(request, 'upload_marks.html', {'form': form})
+
+
+@login_required
+def upload_survey(request):
+    if request.method == 'POST':
+        form = SurveyUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            su = form.save(commit=False)
+            su.uploaded_by = request.user
+
+            # get uploaded file directly from request to avoid closed file issues
+            uploaded_file = request.FILES.get('file')
+
+            # validate CSV
+            try:
+                result = parse_survey_csv(uploaded_file, su.template)
+            except SurveyValidationError as e:
+                AuditLog.objects.create(user=request.user, action='Survey upload failed', object_type='SurveyUpload', object_id='-1', details={'error': str(e)})
+                messages.error(request, f'Validation error: {e}')
+                return redirect('upload_survey')
+
+            # Save file, summary and finalize
+            su.file = uploaded_file
+            su.is_locked = True
+            su.summary = result['summary']
+            su.total_responses = result['total_responses']
+            su.save()
+
+            # Create COIndirectAttainment or POIndirectAttainment depending on template
+            if su.template.survey_type == 'COURSE':
+                # For each question code (CO1...), find the CourseOutcome for the selected course
+                for code, data in su.summary.items():
+                    try:
+                        co = CourseOutcome.objects.get(course=su.course, code=code)
+                    except CourseOutcome.DoesNotExist:
+                        AuditLog.objects.create(user=request.user, action='COIndirect compute failed', object_type='SurveyUpload', object_id=str(su.id), details={'missing_co': code})
+                        continue
+                    avg = data['average']
+                    COIndirectAttainment.objects.update_or_create(course_outcome=co, survey_upload=su, defaults={'indirect_score': avg, 'total_responses': data['total_responses']})
+                    AuditLog.objects.create(user=request.user, action='COIndirect computed', object_type='COIndirectAttainment', object_id=f'{co.id}:{su.id}', details={'average': avg})
+            else:
+                # program survey -> create POIndirectAttainment
+                for code, data in su.summary.items():
+                    try:
+                        po = ProgramOutcome.objects.get(code=code)
+                    except ProgramOutcome.DoesNotExist:
+                        AuditLog.objects.create(user=request.user, action='POIndirect compute failed', object_type='SurveyUpload', object_id=str(su.id), details={'missing_po': code})
+                        continue
+                    avg = data['average']
+                    POIndirectAttainment.objects.update_or_create(program_outcome=po, survey_upload=su, defaults={'indirect_score': avg, 'total_responses': data['total_responses']})
+                    AuditLog.objects.create(user=request.user, action='POIndirect computed', object_type='POIndirectAttainment', object_id=f'{po.id}:{su.id}', details={'average': avg})
+
+            AuditLog.objects.create(user=request.user, action='Survey uploaded', object_type='SurveyUpload', object_id=str(su.id), details={'template': su.template.name, 'responses': su.total_responses})
+            messages.success(request, 'Survey uploaded and summarized successfully.')
+            return redirect('survey_upload_preview', su.id)
+        else:
+            messages.error(request, 'Please correct the errors in the form.')
+    else:
+        form = SurveyUploadForm()
+    return render(request, 'upload_survey.html', {'form': form})
+
+
+@login_required
+def survey_upload_preview(request, upload_id):
+    su = get_object_or_404(SurveyUpload, id=upload_id)
+    if request.user != su.uploaded_by and not request.user.is_superuser:
+        messages.error(request, 'Unauthorized')
+        return redirect('index')
+    return render(request, 'survey_upload_preview.html', {'survey_upload': su})
 
 
 @login_required

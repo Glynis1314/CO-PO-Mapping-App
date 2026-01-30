@@ -400,6 +400,11 @@ class SurveyUpload(models.Model):
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
     file = models.FileField(upload_to="survey_uploads/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    # Link to course or program depending on template.survey_type
+    course = models.ForeignKey('Course', on_delete=models.CASCADE, null=True, blank=True)
+    program = models.ForeignKey('Program', on_delete=models.CASCADE, null=True, blank=True)
+
     is_locked = models.BooleanField(default=True, help_text="Survey responses are read-only after upload")
     total_responses = models.IntegerField(default=0)
     # summary could store counts per response option per question: {"CO1": {"Strongly Agree": 10, ...}, ...}
@@ -408,6 +413,21 @@ class SurveyUpload(models.Model):
     def __str__(self):
         return f"SurveyUpload ({self.template.name}) by {self.uploaded_by.username} - {self.uploaded_at}"
 
+
+class POIndirectAttainment(models.Model):
+    """Indirect attainment derived from program exit survey per PO."""
+    program_outcome = models.ForeignKey(ProgramOutcome, on_delete=models.CASCADE)
+    survey_upload = models.ForeignKey(SurveyUpload, on_delete=models.CASCADE)
+    indirect_score = models.FloatField(help_text="Average score per response (0-3 scale)")
+    total_responses = models.IntegerField()
+
+    computed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("program_outcome", "survey_upload")
+
+    def __str__(self):
+        return f"Indirect PO - {self.program_outcome} - {self.indirect_score}"
 
 class COIndirectAttainment(models.Model):
     """Indirect attainment derived from course exit survey per CO."""

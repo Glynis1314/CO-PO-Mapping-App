@@ -97,6 +97,14 @@ urlpatterns = [
          TemplateView.as_view(template_name="import_sample.html"),
          name="import_sample"),
 
+    path('survey/upload/',
+         views.upload_survey,
+         name='upload_survey'),
+
+    path('survey/upload/preview/<int:upload_id>/',
+         views.survey_upload_preview,
+         name='survey_upload_preview'),
+
     # -------------------------
     # Sample Pages
     # -------------------------

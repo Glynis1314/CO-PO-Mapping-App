@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Survey Upload Preview — Attainment{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_hod.html" %}</div>
+  <div class="col-md-9">
+    <h3>Upload Preview</h3>
+    <p><strong>Template:</strong> {{ survey_upload.template.name }} &nbsp; <strong>Type:</strong> {{ survey_upload.template.get_survey_type_display }} &nbsp; <strong>Status:</strong> {% if survey_upload.is_locked %}Locked{% else %}Editable{% endif %}</p>
+
+    <h5>Summary</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered">
+        <thead>
+          <tr><th>Question</th><th>Average Score (0-3)</th><th>Total Responses</th></tr>
+        </thead>
+        <tbody>
+          {% for code, data in survey_upload.summary.items %}
+            <tr>
+              <td>{{ code }}</td>
+              <td>{{ data.average|floatformat:2 }}</td>
+              <td>{{ data.total_responses }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

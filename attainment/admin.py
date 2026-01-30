@@ -16,6 +16,7 @@ from .models import (
     COAttainment,
     COFinalAttainment,
     COIndirectAttainment,
+    POIndirectAttainment,
     POAttainment,
     CoursePOAttainment,
     ProgramPOAttainment,
@@ -62,6 +63,7 @@ admin.site.register(MarksUpload)
 admin.site.register(SurveyTemplate)
 admin.site.register(SurveyQuestion)
 admin.site.register(SurveyUpload)
+admin.site.register(POIndirectAttainment)
 admin.site.register(CQIAction)
 admin.site.register(AuditLog)
 admin.site.register(SemesterLock)

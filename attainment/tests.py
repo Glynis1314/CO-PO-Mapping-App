@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
-from .models import AcademicYear, Department, Program, Course, Assessment, AssessmentComponent, Student, MarksUpload, UserProfile
+from .models import AcademicYear, Department, Program, Course, Assessment, AssessmentComponent, Student, MarksUpload, UserProfile, SurveyTemplate, SurveyQuestion, SurveyUpload, COIndirectAttainment, CourseOutcome
 from django.urls import reverse
 from io import BytesIO
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -106,5 +106,37 @@ class MarksParserTests(TestCase):
             time.sleep(1)
             students = Student.objects.filter(roll_number__in=['X001','X002'])
             self.assertEqual(students.count(), 2)
+
+    def test_survey_csv_upload_and_summary(self):
+        # Create a survey template with questions CO1, CO2
+        st = SurveyTemplate.objects.create(name='Course Exit Sample', survey_type='COURSE', created_by=self.teacher)
+        SurveyQuestion.objects.create(template=st, code='CO1', text='CO1?')
+        SurveyQuestion.objects.create(template=st, code='CO2', text='CO2?')
+
+        # Create a sample CSV
+        import io
+        s = io.StringIO()
+        writer = csv.writer(s)
+        writer.writerow(['CO1', 'CO2'])
+        writer.writerow(['Strongly Agree', 'Agree'])
+        writer.writerow(['Agree', 'Neutral'])
+        csv_bytes = s.getvalue().encode('utf-8')
+        upload_file = SimpleUploadedFile('survey.csv', csv_bytes, content_type='text/csv')
+
+        # Teacher uploads survey for the course
+        self.client.login(username='teacher1', password='pass')
+        url = reverse('upload_survey')
+        response = self.client.post(url, {'template': st.id, 'file': upload_file, 'course': self.assessment.course.id})
+        self.assertEqual(response.status_code, 302)
+        su = SurveyUpload.objects.latest('uploaded_at')
+        self.assertTrue(su.is_locked)
+        self.assertEqual(su.total_responses, 2)
+        # summary contains averages
+        self.assertAlmostEqual(su.summary['CO1']['average'], (3+2)/2)
+        self.assertAlmostEqual(su.summary['CO2']['average'], (2+1)/2)
+        # COIndirectAttainment created
+        co1 = CourseOutcome.objects.get(course=self.assessment.course, code='CO1')
+        ci = COIndirectAttainment.objects.get(course_outcome=co1, survey_upload=su)
+        self.assertAlmostEqual(ci.indirect_score, (3+2)/2)
 
 

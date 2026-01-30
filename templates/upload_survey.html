@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Upload Survey — Attainment{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_hod.html" %}</div>
+  <div class="col-md-9">
+    <h3>Upload Survey CSV</h3>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-primary">Upload & Summarize</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
