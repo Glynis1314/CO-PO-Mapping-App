@@ -1,12 +1,12 @@
 import csv
 from django.shortcuts import render, redirect
-from .models import Student, AssessmentComponent, StudentMark, CourseOutcome, COAttainment
+from .models import Student, AssessmentComponent, StudentMark, CourseOutcome, COAttainment, Department, POAttainment, Course, TeacherCourseAssignment
 from django.shortcuts import redirect
 from .models import AcademicYear
 from django.contrib import messages
 from django.contrib.auth.models import User
-from .models import Course, TeacherCourseAssignment
 from django.contrib.auth.decorators import login_required
+from django.db.models import Avg, Count
 
 
 def upload_marks(request, assessment_id):
@@ -126,3 +126,98 @@ def teacher_dashboard(request):
         'user_name': request.user.get_full_name() or request.user.username,
     }
     return render(request, 'teacher/dashboard.html', context)
+
+
+
+# The logic for Principal dashboard
+def principal_dashboard(request):
+    # --- Real Summary Stats ---
+    # Count total departments in the system 
+    total_depts = Department.objects.count()
+    
+    # Count all assessments created by teachers across all courses [cite: 59, 244]
+    total_assessments = Assessment.objects.count()
+    
+    # Count COs where attainment level is 0 or 1 (Below Threshold) [cite: 410, 715]
+    low_cos_count = COAttainment.objects.filter(attainment_level__lt=2).count()
+
+    # --- Department Table Data ---
+    departments = Department.objects.all()
+    dept_stats = []
+
+    for dept in departments:
+        # Calculate Average CO Attainment for this department [cite: 1076, 1079]
+        avg_co = COAttainment.objects.filter(
+            course_outcome__course__department=dept
+        ).aggregate(Avg('attainment_percentage'))['attainment_percentage__avg'] or 0
+
+        # Calculate Average PO Attainment for this department [cite: 1076, 1083]
+        avg_po = POAttainment.objects.filter(
+            program_outcome__course__department=dept
+        ).aggregate(Avg('attainment_percentage'))['attainment_percentage__avg'] or 0
+
+        # Determine the "Gap" Label based on the average % [cite: 72, 264, 1105]
+        if avg_co >= 70:
+            gap_label, gap_class = "Low", "success"
+        elif avg_co >= 60:
+            gap_label, gap_class = "Moderate", "warning"
+        else:
+            gap_label, gap_class = "High", "danger"
+
+        dept_stats.append({
+            'name': dept.name,
+            'avg_co': round(avg_co, 1),
+            'avg_po': round(avg_po, 1),
+            'gap_label': gap_label,
+            'gap_class': gap_class
+        })
+
+    context = {
+        'total_depts': total_depts,
+        'total_assessments': total_assessments,
+        'low_cos_count': low_cos_count,
+        'dept_stats': dept_stats
+    }
+    return render(request, 'principal/dashboard.html', context)
+
+
+def attainment_report_view(request):
+    # Fetch all years and subjects for the dropdowns
+    academic_years = AcademicYear.objects.all()
+    subjects = Course.objects.all()
+    
+    # Initialize variables for the report
+    selected_year = request.GET.get('academic_year')
+    selected_subject = request.GET.get('subject')
+    co_results = []
+    po_results = []
+
+    if selected_year and selected_subject:
+        # Fetch real attainment data based on selection
+        co_results = COAttainment.objects.filter(
+            course_outcome__course_id=selected_subject
+        )
+        po_results = POAttainment.objects.filter(
+            # Simplified: In production, filter by course through CO mappings
+            attainment_percentage__gt=0 
+        )
+
+    context = {
+        'academic_years': academic_years,
+        'subjects': subjects,
+        'co_results': co_results,
+        'po_results': po_results,
+        'selected_year': selected_year,
+        'selected_subject': selected_subject,
+    }
+    return render(request, 'reports/attainment_report.html', context)
+
+
+def gap_analysis_view(request):
+    # Fetch records where attainment didn't reach the 'High' level
+    gaps = COAttainment.objects.filter(attainment_level__lt=3)
+    
+    context = {
+        'gaps': gaps,
+    }
+    return render(request, 'reports/gap_analysis.html', context)

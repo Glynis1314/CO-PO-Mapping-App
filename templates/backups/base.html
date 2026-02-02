@@ -1,83 +1,137 @@
 {% load static %}
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Attainment System Prototype{% endblock %}</title>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{% block title %}Attainment System Prototype{% endblock %}</title>
 
-    <!-- Bootstrap 5 CSS CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+		<!-- Bootstrap 5 CSS CDN -->
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+		/>
 
-    <!-- Optional custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+		<!-- Optional custom CSS -->
+		<link rel="stylesheet" href="{% static 'css/styles.css' %}" />
 
-    {% block extra_head %}{% endblock %}
-    <style>
-      /* Small prototype-friendly overrides (safe to keep or remove) */
-      body { padding-top: 68px; }
-      .app-footer { font-size: .9rem; opacity: .9; }
-      .card-role { cursor: pointer; transition: transform .12s ease; }
-      .card-role:hover { transform: translateY(-4px); }
-    </style>
-  </head>
-  <body>
-    <!-- Top navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
-      <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center" href="/">
-          <img src="{% static 'images/logo.png' %}" alt="logo" width="36" height="36" class="me-2 rounded">
-          <span>DBIT — Attainment</span>
-        </a>
+		{% block extra_head %}{% endblock %}
+		<style>
+			/* Small prototype-friendly overrides (safe to keep or remove) */
+			body {
+				padding-top: 68px;
+			}
+			.app-footer {
+				font-size: 0.9rem;
+				opacity: 0.9;
+			}
+			.card-role {
+				cursor: pointer;
+				transition: transform 0.12s ease;
+			}
+			.card-role:hover {
+				transform: translateY(-4px);
+			}
+			html {
+				scrollbar-gutter: stable;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Top navbar -->
+		<nav
+			class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm"
+		>
+			<div class="container-fluid">
+				<a class="navbar-brand d-flex align-items-center" href="/">
+					<img
+						src="{% static 'images/logo.png' %}"
+						alt="logo"
+						width="36"
+						height="36"
+						class="me-2 rounded"
+					/>
+					<span>DBIT — Attainment</span>
+				</a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav" aria-controls="topNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+				<button
+					class="navbar-toggler"
+					type="button"
+					data-bs-toggle="collapse"
+					data-bs-target="#topNav"
+					aria-controls="topNav"
+					aria-expanded="false"
+					aria-label="Toggle navigation"
+				>
+					<span class="navbar-toggler-icon"></span>
+				</button>
 
-        <div class="collapse navbar-collapse" id="topNav">
-          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="/settings/users/">Users</a></li>
-            <li class="nav-item"><a class="nav-link" href="/reports/attainment/">Reports</a></li>
-            <li class="nav-item"><a class="nav-link" href="/evidence/">Evidence</a></li>
-          </ul>
+				<div class="collapse navbar-collapse" id="topNav">
+					<ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+						<li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+						<li class="nav-item">
+							<a class="nav-link" href="/settings/users/">Users</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/reports/attainment/">Reports</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/evidence/">Evidence</a>
+						</li>
+					</ul>
 
-          <!-- Right side mock user (replace with auth later) -->
-          <div class="d-flex align-items-center ms-3">
-            <div class="text-white me-2 small">Signed in as <strong>Guest</strong></div>
-            <a class="btn btn-outline-light btn-sm" href="{% url 'login' %}" role="button">Sign in</a>
-          </div>
-        </div>
-      </div>
-    </nav>
+					<!-- Right side mock user (replace with auth later) -->
+					<div class="d-flex align-items-center ms-3">
+						<div class="text-white me-2 small">
+							Signed in as <strong>Guest</strong>
+						</div>
+						<a
+							class="btn btn-outline-light btn-sm"
+							href="{% url 'login' %}"
+							role="button"
+							>Sign in</a
+						>
+					</div>
+				</div>
+			</div>
+		</nav>
 
-    <!-- Main content -->
-    <main class="container-fluid">
-      <div class="container py-4">
-        {% block content %}
-        <!-- default content -->
-        <div class="text-center py-5">
-          <h1 class="display-6">Attainment System Prototype</h1>
-          <p class="lead">Use the role cards on the landing page to open dashboards (prototype links).</p>
-        </div>
-        {% endblock %}
-      </div>
-    </main>
+		<!-- Main content -->
+		<main class="container-fluid px-4 py-4">
+			{% block content %}
+			<!-- default content -->
+			<div class="text-center py-5">
+				<h1 class="display-6">Attainment System Prototype</h1>
+				<p class="lead">
+					Use the role cards on the landing page to open dashboards (prototype
+					links).
+				</p>
+			</div>
+			{% endblock %}
+		</main>
 
-    <!-- Footer -->
-    <footer class="bg-light text-center text-muted py-3 border-top mt-auto app-footer">
-      <div class="container">
-        <div>DBIT — SO/PO Attainment Prototype &middot; <small>For demo only</small></div>
-        <div class="small">Built for: HOD, Department, Principal, Teachers | Academic Year: <span id="footer-year">2025-26</span></div>
-      </div>
-    </footer>
+		<!-- Footer -->
+		<footer
+			class="bg-light text-center text-muted py-3 border-top mt-auto app-footer"
+		>
+			<div class="container">
+				<div>
+					DBIT — SO/PO Attainment Prototype &middot;
+					<small>For demo only</small>
+				</div>
+				<div class="small">
+					Built for: HOD, Department, Principal, Teachers | Academic Year:
+					<span id="footer-year">2025-26</span>
+				</div>
+			</div>
+		</footer>
 
-    <!-- Bootstrap 5 JS bundle (popper included) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+		<!-- Bootstrap 5 JS bundle (popper included) -->
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Optional custom JS -->
-    <script src="{% static 'js/main.js' %}"></script>
+		<!-- Optional custom JS -->
+		<script src="{% static 'js/main.js' %}"></script>
 
-    {% block extra_js %}{% endblock %}
-  </body>
+		{% block extra_js %}{% endblock %}
+	</body>
 </html>

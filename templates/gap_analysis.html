@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Gap Analysis — DBIT Attainment{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 text-black">
+    <div class="row">
+        <div class="col-md-3">{% include "components/sidebar_principal.html" %}</div>
+        <div class="col-md-9">
+            <h3>Gap Analysis & Continuous Improvement</h3>
+            <p class="text-muted small">The following Course Outcomes did not meet the target attainment levels.</p>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Course</th>
+                            <th>CO</th>
+                            <th>Target %</th>
+                            <th>Actual %</th>
+                            <th>Gap</th>
+                            <th>Proposed Action Plan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for gap in gaps %}
+                        <tr>
+                            <td>{{ gap.course_outcome.course.code }}</td>
+                            <td>{{ gap.course_outcome.code }}</td>
+                            <td>{{ gap.course_outcome.attainment_target }}%</td>
+                            <td>{{ gap.attainment_percentage }}%</td>
+                            <td class="text-danger font-weight-bold">
+                                -{{ gap.course_outcome.attainment_target|add:gap.attainment_percentage }}%
+                            </td>
+                            <td>
+                                <textarea class="form-control form-control-sm" placeholder="Enter corrective actions..."></textarea>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-success">No gaps detected! All targets were met.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-primary">Save Action Plan</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

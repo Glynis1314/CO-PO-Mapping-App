@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Attainment Report — Attainment Prototype{% endblock %}
+{% block title %}Attainment Report — DBIT Prototype{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -9,58 +9,84 @@
 
     <div class="card shadow-sm mb-3">
       <div class="card-body">
-        <div class="row">
+        <form method="GET" action="{% url 'attainment_report' %}" class="row">
           <div class="col-md-4">
             <label class="form-label">Academic Year / Semester</label>
-            <select class="form-select">
-              <option>2025-26 ODD</option>
-              <option>2025-26 EVEN</option>
+            <select name="academic_year" class="form-select">
+              {% for year in academic_years %}
+                <option value="{{ year.id }}" {% if selected_year == year.id|slugify %}selected{% endif %}>
+                  {{ year.name }}
+                </option>
+              {% endfor %}
             </select>
           </div>
 
           <div class="col-md-4">
             <label class="form-label">Subject</label>
-            <select class="form-select">
-              <option>CS101</option>
+            <select name="subject" class="form-select">
+              {% for subject in subjects %}
+                <option value="{{ subject.id }}" {% if selected_subject == subject.id|slugify %}selected{% endif %}>
+                  {{ subject.code }} — {{ subject.name }}
+                </option>
+              {% endfor %}
             </select>
           </div>
 
           <div class="col-md-4 align-self-end">
-            <button class="btn btn-primary">Generate Report</button>
+            <button type="submit" class="btn btn-primary">Generate Report</button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
 
-    <!-- Sample results -->
+    {% if co_results or po_results %}
     <div class="card shadow-sm mb-3">
       <div class="card-body">
-        <h6>CO Attainment</h6>
+        <h6>Course Outcome (CO) Attainment</h6>
         <table class="table table-sm">
-          <thead><tr><th>CO</th><th>Attainment %</th><th>Status</th></tr></thead>
+          <thead><tr><th>CO Code</th><th>Attainment %</th><th>Status</th></tr></thead>
           <tbody>
-            <tr><td>CO1</td><td>78%</td><td><span class="badge bg-success">OK</span></td></tr>
-            <tr><td>CO2</td><td>62%</td><td><span class="badge bg-warning">Below</span></td></tr>
-            <tr><td>CO3</td><td>55%</td><td><span class="badge bg-danger">Gap</span></td></tr>
+            {% for co in co_results %}
+            <tr>
+              <td>{{ co.course_outcome.code }}</td>
+              <td>{{ co.attainment_percentage }}%</td>
+              <td>
+                {% if co.attainment_level == 3 %}
+                  <span class="badge bg-success">Target Met</span>
+                {% elif co.attainment_level == 2 %}
+                  <span class="badge bg-warning">Satisfactory</span>
+                {% else %}
+                  <span class="badge bg-danger">Gap Identified</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
           </tbody>
         </table>
 
         <hr>
-        <h6>PO Attainment</h6>
+        <h6>Programme Outcome (PO) Attainment</h6>
         <table class="table table-sm">
-          <thead><tr><th>PO</th><th>Attainment %</th></tr></thead>
+          <thead><tr><th>PO Code</th><th>Attainment %</th><th>Level</th></tr></thead>
           <tbody>
-            <tr><td>PO1</td><td>70%</td></tr>
-            <tr><td>PO2</td><td>64%</td></tr>
+            {% for po in po_results %}
+            <tr>
+              <td>{{ po.program_outcome.code }}</td>
+              <td>{{ po.attainment_percentage }}%</td>
+              <td>Level {{ po.attainment_level }}</td>
+            </tr>
+            {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
+    {% else %}
+    <div class="alert alert-info">Select a year and subject to view the real-time attainment report.</div>
+    {% endif %}
 
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary">Download CSV</button>
-      <button class="btn btn-outline-secondary">Download Excel</button>
-      <button class="btn btn-outline-primary">View Gap Analysis</button>
+      <button class="btn btn-outline-secondary">Download PDF Report</button>
+      <a href="{% url 'gap_analysis' %}" class="btn btn-outline-primary">Open Gap Analysis [cite: 261]</a>
     </div>
   </div>
 </div>

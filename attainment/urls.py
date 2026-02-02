@@ -47,9 +47,17 @@ urlpatterns = [
          name="settings_users"),
 
     # HOD Reports
-    path('reports/attainment/',
-         TemplateView.as_view(template_name="attainment_report.html"),
-         name="attainment_report"),
+#     path('reports/attainment/',
+#          TemplateView.as_view(template_name="attainment_report.html"),
+#          name="attainment_report"),
+    
+#     path('reports/gap-analysis/', views.gap_analysis_view, name='gap_analysis'),
+
+    path('reports/attainment/', views.attainment_report_view, name='attainment_report'),
+    
+    # Add this line to resolve the NoReverseMatch error
+    path('reports/gap-analysis/', views.gap_analysis_view, name='gap_analysis'),
+    
 
     # Evidence
     path('evidence/',
