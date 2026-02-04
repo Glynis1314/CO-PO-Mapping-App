@@ -1,12 +1,19 @@
 import csv
 from django.shortcuts import render, redirect
-from .models import Student, AssessmentComponent, StudentMark, CourseOutcome, COAttainment, Department, POAttainment, Course, TeacherCourseAssignment
-from django.shortcuts import redirect
+from .models import Student, Assessment, AssessmentComponent, StudentMark, CourseOutcome, COAttainment, Department, POAttainment, Course, TeacherCourseAssignment
 from .models import AcademicYear
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Count
+
+
+def dashboard_hod(request):
+    return render(request, "dashboard_hod.html")
+
+
+def dashboard_principal(request):
+    return principal_dashboard(request)
 
 
 def upload_marks(request, assessment_id):
@@ -193,14 +200,16 @@ def attainment_report_view(request):
     po_results = []
 
     if selected_year and selected_subject:
-        # Fetch real attainment data based on selection
         co_results = COAttainment.objects.filter(
-            course_outcome__course_id=selected_subject
+            course_outcome__course_id=selected_subject,
+            academic_year_id=selected_year
         )
+
         po_results = POAttainment.objects.filter(
-            # Simplified: In production, filter by course through CO mappings
-            attainment_percentage__gt=0 
-        )
+            academic_year_id=selected_year,
+            course_id=selected_subject
+    )
+
 
     context = {
         'academic_years': academic_years,
@@ -214,10 +223,29 @@ def attainment_report_view(request):
 
 
 def gap_analysis_view(request):
-    # Fetch records where attainment didn't reach the 'High' level
-    gaps = COAttainment.objects.filter(attainment_level__lt=3)
-    
-    context = {
-        'gaps': gaps,
-    }
-    return render(request, 'reports/gap_analysis.html', context)
+
+    departments = Department.objects.all()
+    gap_rows = []
+
+    for dept in departments:
+        avg_co = COAttainment.objects.filter(
+            course_outcome__course__department=dept
+        ).aggregate(Avg('attainment_percentage'))['attainment_percentage__avg'] or 0
+
+        if avg_co >= 70:
+            label, css = "Low", "success"
+        elif avg_co >= 60:
+            label, css = "Moderate", "warning"
+        else:
+            label, css = "High", "danger"
+
+        gap_rows.append({
+            "department": dept.name,
+            "avg": round(avg_co, 1),
+            "label": label,
+            "css": css
+        })
+
+    return render(request, "reports/gap_analysis.html", {
+        "rows": gap_rows
+    })

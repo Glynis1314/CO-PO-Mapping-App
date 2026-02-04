@@ -25,34 +25,38 @@
     <!-- Institution Stats -->
     <div class="row g-3 mb-4">
 
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <div class="h2 mb-0">13</div>
-            <div class="small text-muted">Departments</div>
-          </div>
-        </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <div class="h2 mb-0">{{ total_depts }}</div>
+        <div class="small text-muted">Departments</div>
       </div>
-
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <div class="h2 mb-0">284</div>
-            <div class="small text-muted">Assessments Completed</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body text-center">
-            <div class="h2 mb-0 text-danger">17</div>
-            <div class="small text-muted">COs Below Threshold</div>
-          </div>
-        </div>
-      </div>
-
     </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <a href="{% url 'attainment_report' %}" class="text-decoration-none">
+          <div class="h2 mb-0">{{ total_assessments }}</div>
+        </a>
+        <div class="small text-muted">Assessments Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body text-center">
+        <a href="{% url 'gap_analysis' %}" class="text-decoration-none">
+          <div class="h2 mb-0 text-danger">{{ low_cos_count }}</div>
+        </a>
+        <div class="small text-muted">COs Below Threshold</div>
+      </div>
+    </div>
+  </div>
+
+</div>
 
     <!-- Department Attainment Overview -->
     <div class="card shadow-sm mb-4">
@@ -68,25 +72,20 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Computer Engineering</td>
-              <td>72%</td>
-              <td>69%</td>
-              <td><span class="badge bg-warning">Moderate</span></td>
-            </tr>
-            <tr>
-              <td>IT</td>
-              <td>75%</td>
-              <td>70%</td>
-              <td><span class="badge bg-success">Low</span></td>
-            </tr>
-            <tr>
-              <td>Mechanical</td>
-              <td>63%</td>
-              <td>58%</td>
-              <td><span class="badge bg-danger">High</span></td>
-            </tr>
+          {% for d in dept_stats %}
+          <tr>
+            <td>{{ d.name }}</td>
+            <td>{{ d.avg_co }}%</td>
+            <td>{{ d.avg_po }}%</td>
+            <td>
+              <span class="badge bg-{{ d.gap_class }}">
+                {{ d.gap_label }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
           </tbody>
+
         </table>
       </div>
     </div>
