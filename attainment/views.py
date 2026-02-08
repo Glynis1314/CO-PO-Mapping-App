@@ -15,7 +15,7 @@ def index_view(request):
         profile = getattr(request.user, "profile", None)
         if profile:
             if profile.role == "ADMIN":
-                return redirect("dashboard_principal")
+                return redirect("admin_dashboard")
             elif profile.role == "HOD":
                 return redirect("dashboard_hod")
             elif profile.role == "TEACHER":

@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from . import views
 from . import teacher_views as tv
 from . import auth_views
+from . import admin_views as av
 from .utils.rbac import role_required
 
 
@@ -68,6 +69,47 @@ urlpatterns = [
     path('evidence/',
          _protected_template("evidence_upload.html", 'HOD', 'ADMIN'),
          name="evidence_upload"),
+
+    # ===========================
+    # ADMIN MODULE – full CRUD
+    # ===========================
+
+    # Admin Dashboard
+    path('admin-panel/', av.admin_dashboard, name="admin_dashboard"),
+
+    # Academic Years
+    path('admin-panel/academic-years/', av.admin_academic_years, name="admin_academic_years"),
+    path('admin-panel/academic-years/create/', av.admin_create_academic_year, name="admin_create_academic_year"),
+    path('admin-panel/academic-years/<int:ay_id>/activate/', av.admin_activate_academic_year, name="admin_activate_academic_year"),
+    path('admin-panel/academic-years/<int:ay_id>/delete/', av.admin_delete_academic_year, name="admin_delete_academic_year"),
+
+    # Departments
+    path('admin-panel/departments/', av.admin_departments, name="admin_departments"),
+    path('admin-panel/departments/create/', av.admin_create_department, name="admin_create_department"),
+    path('admin-panel/departments/<int:dept_id>/edit/', av.admin_edit_department, name="admin_edit_department"),
+    path('admin-panel/departments/<int:dept_id>/delete/', av.admin_delete_department, name="admin_delete_department"),
+
+    # Programs
+    path('admin-panel/programs/', av.admin_programs, name="admin_programs"),
+    path('admin-panel/programs/create/', av.admin_create_program, name="admin_create_program"),
+    path('admin-panel/programs/<int:prog_id>/edit/', av.admin_edit_program, name="admin_edit_program"),
+    path('admin-panel/programs/<int:prog_id>/delete/', av.admin_delete_program, name="admin_delete_program"),
+
+    # Semesters
+    path('admin-panel/semesters/', av.admin_semesters, name="admin_semesters"),
+    path('admin-panel/semesters/create/', av.admin_create_semester, name="admin_create_semester"),
+    path('admin-panel/semesters/<int:sem_id>/toggle-lock/', av.admin_toggle_semester_lock, name="admin_toggle_semester_lock"),
+    path('admin-panel/semesters/<int:sem_id>/delete/', av.admin_delete_semester, name="admin_delete_semester"),
+
+    # Courses
+    path('admin-panel/courses/', av.admin_courses, name="admin_courses"),
+    path('admin-panel/courses/create/', av.admin_create_course, name="admin_create_course"),
+    path('admin-panel/courses/<int:course_id>/edit/', av.admin_edit_course, name="admin_edit_course"),
+    path('admin-panel/courses/<int:course_id>/delete/', av.admin_delete_course, name="admin_delete_course"),
+
+    # Admin API (cascading dropdowns)
+    path('admin-panel/api/semesters/<int:ay_id>/', av.api_semesters_for_ay, name="api_semesters_for_ay"),
+    path('admin-panel/api/programs/<int:dept_id>/', av.api_programs_for_dept, name="api_programs_for_dept"),
 
     # ===========================
     # TEACHER MODULE – full CRUD

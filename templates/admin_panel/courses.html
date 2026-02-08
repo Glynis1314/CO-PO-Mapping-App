@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block title %}Courses — Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_admin.html" %}</div>
+  <div class="col-md-9">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">Courses</h3>
+        <div class="text-muted small">Unique course code per academic year. Filter to narrow results.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createCourseModal">
+        <i class="bi bi-plus-lg me-1"></i>New Course
+      </button>
+    </div>
+
+    {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filters -->
+    <form method="get" class="mb-3" id="filterForm">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label small mb-1">Academic Year</label>
+          <select class="form-select form-select-sm" name="ay" id="filterAY" onchange="this.form.submit()">
+            <option value="">All Years</option>
+            {% for ay in academic_years %}
+            <option value="{{ ay.pk }}" {% if f_ay == ay.pk %}selected{% endif %}>
+              {{ ay.name }}{% if ay.is_active %} (Active){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small mb-1">Semester</label>
+          <select class="form-select form-select-sm" name="sem" onchange="this.form.submit()">
+            <option value="">All Semesters</option>
+            {% for sem in semesters %}
+            <option value="{{ sem.pk }}" {% if f_sem == sem.pk %}selected{% endif %}>
+              Sem {{ sem.number }} ({{ sem.academic_year.name }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small mb-1">Department</label>
+          <select class="form-select form-select-sm" name="dept" onchange="this.form.submit()">
+            <option value="">All Departments</option>
+            {% for dept in departments %}
+            <option value="{{ dept.pk }}" {% if f_dept == dept.pk %}selected{% endif %}>
+              {{ dept.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small mb-1">Program</label>
+          <select class="form-select form-select-sm" name="prog" onchange="this.form.submit()">
+            <option value="">All Programs</option>
+            {% for prog in programs %}
+            <option value="{{ prog.pk }}" {% if f_prog == prog.pk %}selected{% endif %}>
+              {{ prog.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Semester</th>
+            <th>Department</th>
+            <th>Program</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in courses %}
+          <tr>
+            <td><strong>{{ c.code }}</strong></td>
+            <td>{{ c.name }}</td>
+            <td>
+              {% if c.semester %}
+                Sem {{ c.semester.number }} ({{ c.semester.academic_year.name }})
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td>{{ c.department.name }}</td>
+            <td>
+              {% if c.program %}{{ c.program.name }}{% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+            <td class="text-end">
+              <button class="btn btn-outline-primary btn-sm" title="Edit"
+                      data-bs-toggle="modal" data-bs-target="#editCourseModal{{ c.pk }}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm" title="Delete"
+                      data-bs-toggle="modal" data-bs-target="#deleteCourseModal{{ c.pk }}">
+                <i class="bi bi-trash"></i>
+              </button>
+
+              <!-- Edit modal -->
+              <div class="modal fade" id="editCourseModal{{ c.pk }}" tabindex="-1">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <form method="post" action="{% url 'admin_edit_course' c.pk %}">
+                      {% csrf_token %}
+                      <div class="modal-header">
+                        <h5 class="modal-title">Edit Course</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label">Code <span class="text-danger">*</span></label>
+                          <input type="text" class="form-control" name="code" value="{{ c.code }}" required>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Name <span class="text-danger">*</span></label>
+                          <input type="text" class="form-control" name="name" value="{{ c.name }}" required>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Semester <span class="text-danger">*</span></label>
+                          <select class="form-select" name="semester_id" required>
+                            {% for sem in semesters %}
+                            <option value="{{ sem.pk }}" {% if c.semester_id == sem.pk %}selected{% endif %}>
+                              Sem {{ sem.number }} ({{ sem.academic_year.name }})
+                            </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Department <span class="text-danger">*</span></label>
+                          <select class="form-select" name="department_id" required>
+                            {% for dept in departments %}
+                            <option value="{{ dept.pk }}" {% if c.department_id == dept.pk %}selected{% endif %}>
+                              {{ dept.name }}
+                            </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Program <span class="text-danger">*</span></label>
+                          <select class="form-select" name="program_id" required>
+                            {% for prog in programs %}
+                            <option value="{{ prog.pk }}" {% if c.program_id == prog.pk %}selected{% endif %}>
+                              {{ prog.name }} ({{ prog.department.name }})
+                            </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Delete modal -->
+              <div class="modal fade" id="deleteCourseModal{{ c.pk }}" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h6 class="modal-title">Delete "{{ c.code }}"?</h6>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-muted small">
+                      Teacher assignments and assessments must be removed first.
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      <form method="post" action="{% url 'admin_delete_course' c.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No courses found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createCourseModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="post" action="{% url 'admin_create_course' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">New Course</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Course Code <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="code" placeholder="e.g. 18CSC205J" required>
+              <div class="form-text">Must be unique within the academic year.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Course Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="name" placeholder="e.g. Operating Systems" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Academic Year → Semester <span class="text-danger">*</span></label>
+              <select class="form-select" name="semester_id" id="createCourseSem" required>
+                <option value="">— Select Semester —</option>
+                {% for sem in semesters %}
+                <option value="{{ sem.pk }}">
+                  {{ sem.academic_year.name }} → Sem {{ sem.number }} ({{ sem.type }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Department <span class="text-danger">*</span></label>
+              <select class="form-select" name="department_id" id="createCourseDept" required>
+                <option value="">— Select Department —</option>
+                {% for dept in departments %}
+                <option value="{{ dept.pk }}">{{ dept.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Program <span class="text-danger">*</span></label>
+            <select class="form-select" name="program_id" id="createCourseProg" required>
+              <option value="">— Select Program —</option>
+              {% for prog in programs %}
+              <option value="{{ prog.pk }}" data-dept="{{ prog.department_id }}">
+                {{ prog.name }} ({{ prog.department.name }})
+              </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Program must belong to the selected department.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Client-side filter: when department changes in create modal, filter programs
+document.getElementById('createCourseDept')?.addEventListener('change', function() {
+    const deptId = this.value;
+    const progSelect = document.getElementById('createCourseProg');
+    const options = progSelect.querySelectorAll('option[data-dept]');
+    options.forEach(opt => {
+        opt.style.display = (!deptId || opt. dataset.dept === deptId) ? '' : 'none';
+        if (opt.style.display === 'none' && opt.selected) opt.selected = false;
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,77 @@
+<!-- components/sidebar_admin.html -->
+<nav class="sidebar d-flex flex-column">
+  <ul class="nav">
+    <li class="nav-item">
+      <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'dashboard_principal' %}active{% endif %}"
+         href="{% url 'admin_dashboard' %}">
+        <i class="bi bi-speedometer2"></i>
+        <span class="label">Dashboard</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link {% if 'academic_year' in request.resolver_match.url_name %}active{% endif %}"
+         href="{% url 'admin_academic_years' %}">
+        <i class="bi bi-calendar3"></i>
+        <span class="label">Academic Years</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link {% if 'department' in request.resolver_match.url_name %}active{% endif %}"
+         href="{% url 'admin_departments' %}">
+        <i class="bi bi-building"></i>
+        <span class="label">Departments</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link {% if 'program' in request.resolver_match.url_name %}active{% endif %}"
+         href="{% url 'admin_programs' %}">
+        <i class="bi bi-mortarboard"></i>
+        <span class="label">Programs</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link {% if 'semester' in request.resolver_match.url_name %}active{% endif %}"
+         href="{% url 'admin_semesters' %}">
+        <i class="bi bi-hash"></i>
+        <span class="label">Semesters</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link {% if request.resolver_match.url_name == 'admin_courses' or request.resolver_match.url_name == 'admin_create_course' %}active{% endif %}"
+         href="{% url 'admin_courses' %}">
+        <i class="bi bi-book"></i>
+        <span class="label">Courses</span>
+      </a>
+    </li>
+
+    <hr class="my-2 mx-3">
+
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'attainment_report' %}">
+        <i class="bi bi-bar-chart-line"></i>
+        <span class="label">Reports</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'evidence_upload' %}">
+        <i class="bi bi-folder2-open"></i>
+        <span class="label">Evidence</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'settings_users' %}">
+        <i class="bi bi-people"></i>
+        <span class="label">Users</span>
+      </a>
+    </li>
+
+    <div class="sidebar-footer small">DBIT — Attainment</div>
+  </ul>
+</nav>

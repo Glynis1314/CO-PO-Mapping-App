@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Academic Years — Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_admin.html" %}</div>
+  <div class="col-md-9">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">Academic Years</h3>
+        <div class="text-muted small">Only one academic year can be active at a time.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createAYModal">
+        <i class="bi bi-plus-lg me-1"></i>New Year
+      </button>
+    </div>
+
+    {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th class="text-center">Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ay in years %}
+          <tr>
+            <td>
+              <strong>{{ ay.name }}</strong>
+            </td>
+            <td class="text-center">
+              {% if ay.is_active %}
+                <span class="badge bg-success">Active</span>
+              {% else %}
+                <span class="badge bg-secondary">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              {% if not ay.is_active %}
+              <form method="post" action="{% url 'admin_activate_academic_year' ay.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-outline-success btn-sm" title="Activate">
+                  <i class="bi bi-check-circle"></i> Activate
+                </button>
+              </form>
+              {% endif %}
+              <button class="btn btn-outline-danger btn-sm" title="Delete"
+                      data-bs-toggle="modal" data-bs-target="#deleteAYModal{{ ay.pk }}">
+                <i class="bi bi-trash"></i>
+              </button>
+              <!-- Delete confirm modal -->
+              <div class="modal fade" id="deleteAYModal{{ ay.pk }}" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h6 class="modal-title">Delete "{{ ay.name }}"?</h6>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-muted small">
+                      This action cannot be undone. Semesters and courses under this year must be removed first.
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      <form method="post" action="{% url 'admin_delete_academic_year' ay.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="text-center text-muted py-4">No academic years yet. Create one above.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createAYModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'admin_create_academic_year' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">New Academic Year</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="ayName" class="form-label">Year Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="ayName" name="name"
+                   placeholder="e.g. 2025-26" required>
+            <div class="form-text">Must be unique.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

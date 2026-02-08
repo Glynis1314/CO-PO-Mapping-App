@@ -54,7 +54,7 @@ def _role_redirect(user):
 
     role = profile.role
     if role == "ADMIN":
-        return "dashboard_principal"
+        return "admin_dashboard"
     elif role == "HOD":
         return "dashboard_hod"
     elif role == "TEACHER":

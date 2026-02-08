@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Departments — Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_admin.html" %}</div>
+  <div class="col-md-9">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">Departments</h3>
+        <div class="text-muted small">Only one department can be marked as First Year.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createDeptModal">
+        <i class="bi bi-plus-lg me-1"></i>New Department
+      </button>
+    </div>
+
+    {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th class="text-center">First Year</th>
+            <th class="text-center">Programs</th>
+            <th class="text-center">Courses</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dept in departments %}
+          <tr>
+            <td><strong>{{ dept.name }}</strong></td>
+            <td class="text-center">
+              {% if dept.is_first_year %}
+                <span class="badge bg-info">First Year</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="text-center">{{ dept.program_count }}</td>
+            <td class="text-center">{{ dept.course_count }}</td>
+            <td class="text-end">
+              <button class="btn btn-outline-primary btn-sm" title="Edit"
+                      data-bs-toggle="modal" data-bs-target="#editDeptModal{{ dept.pk }}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm" title="Delete"
+                      data-bs-toggle="modal" data-bs-target="#deleteDeptModal{{ dept.pk }}">
+                <i class="bi bi-trash"></i>
+              </button>
+
+              <!-- Edit modal -->
+              <div class="modal fade" id="editDeptModal{{ dept.pk }}" tabindex="-1">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <form method="post" action="{% url 'admin_edit_department' dept.pk %}">
+                      {% csrf_token %}
+                      <div class="modal-header">
+                        <h5 class="modal-title">Edit Department</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label">Name <span class="text-danger">*</span></label>
+                          <input type="text" class="form-control" name="name" value="{{ dept.name }}" required>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="is_first_year" id="fyCheck{{ dept.pk }}"
+                                 {% if dept.is_first_year %}checked{% endif %}>
+                          <label class="form-check-label" for="fyCheck{{ dept.pk }}">
+                            This is the First Year department
+                          </label>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Delete modal -->
+              <div class="modal fade" id="deleteDeptModal{{ dept.pk }}" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h6 class="modal-title">Delete "{{ dept.name }}"?</h6>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-muted small">
+                      Programs and courses under this department must be removed first.
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      <form method="post" action="{% url 'admin_delete_department' dept.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">No departments yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createDeptModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'admin_create_department' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">New Department</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Department Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="name" placeholder="e.g. Computer Engineering" required>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_first_year" id="fyCheckCreate">
+            <label class="form-check-label" for="fyCheckCreate">
+              This is the First Year department
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
