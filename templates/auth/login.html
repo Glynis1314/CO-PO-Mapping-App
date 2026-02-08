@@ -1,6 +1,7 @@
 {% extends "base.html" %}
-{% block content %}
+{% block title %}Sign In — DBIT Attainment{% endblock %}
 
+{% block content %}
 <div class="container" style="max-width: 420px; margin-top: 80px;">
   <div class="card shadow-sm">
     <div class="card-body p-4">
@@ -10,26 +11,29 @@
         DBIT Attainment System
       </p>
 
-      <form action="/" method="get">
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
+        {% if request.GET.next %}
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% endif %}
 
         <div class="mb-3">
           <label class="form-label">Username</label>
-          <input type="text" class="form-control" placeholder="Enter username">
+          <input type="text" name="username" class="form-control" placeholder="Enter username" required autofocus>
         </div>
 
         <div class="mb-3">
           <label class="form-label">Password</label>
-          <input type="password" class="form-control" placeholder="Enter password">
-        </div>
-
-        <div class="mb-4">
-          <label class="form-label">Role</label>
-          <select class="form-select">
-            <option value="">Select role</option>
-            <option value="teacher">Teacher</option>
-            <option value="hod">HOD</option>
-          </select>
+          <input type="password" name="password" class="form-control" placeholder="Enter password" required>
         </div>
 
         <button type="submit" class="btn btn-primary w-100">
@@ -38,7 +42,7 @@
       </form>
 
       <div class="text-center mt-3 text-muted small">
-        Prototype sign-in • No real authentication
+        Contact your HOD or admin if you don't have credentials.
       </div>
 
     </div>

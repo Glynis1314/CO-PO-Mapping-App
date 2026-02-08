@@ -2,37 +2,50 @@ from django.urls import path
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth.decorators import login_required
 from . import views
 from . import teacher_views as tv
+from . import auth_views
+from .utils.rbac import role_required
+
+
+def _protected_template(template, *roles):
+    """Return a login_required + role_required TemplateView."""
+    view = TemplateView.as_view(template_name=template)
+    if roles:
+        view = role_required(*roles)(view)
+    view = login_required(view)
+    return view
+
 
 urlpatterns = [
 
     # -------------------------
+    # Authentication
+    # -------------------------
+    path('login/', auth_views.login_view, name="login"),
+    path('logout/', auth_views.logout_view, name="logout"),
+
+    # -------------------------
     # Landing / Dashboards
     # -------------------------
-    path('', TemplateView.as_view(template_name="index.html"), name="index"),
+    path('', views.index_view, name="index"),
 
-    path('login/',
-          TemplateView.as_view(template_name="auth/login.html"),
-          name="login"),
-
-    path('hod/dashboard/',
-         TemplateView.as_view(template_name="dashboard_hod.html"),
-         name="dashboard_hod"),
+    path('hod/dashboard/', views.dashboard_hod, name="dashboard_hod"),
 
     path('teacher/dashboard/',
          tv.teacher_dashboard,
          name="teacher_dashboard"),
 
     path('principal/dashboard/',
-         TemplateView.as_view(template_name="dashboard_principal.html"),
+         views.principal_dashboard,
          name="dashboard_principal"),
      
     # -------------------------
-    # HOD pages
+    # HOD pages (protected)
     # -------------------------
     path('subjects/',
-         TemplateView.as_view(template_name="subjects.html"),
+         _protected_template("subjects.html", 'HOD', 'ADMIN'),
          name="subjects"),
 
      # Path for assigning and saving the assigned subjects 
@@ -44,7 +57,7 @@ urlpatterns = [
     path('academic-years/create/', views.create_academic_year, name='create_academic_year'),
 
     path('settings/users/',
-         TemplateView.as_view(template_name="settings_users.html"),
+         _protected_template("settings_users.html", 'HOD', 'ADMIN'),
          name="settings_users"),
 
     # HOD Reports
@@ -53,7 +66,7 @@ urlpatterns = [
 
     # Evidence
     path('evidence/',
-         TemplateView.as_view(template_name="evidence_upload.html"),
+         _protected_template("evidence_upload.html", 'HOD', 'ADMIN'),
          name="evidence_upload"),
 
     # ===========================

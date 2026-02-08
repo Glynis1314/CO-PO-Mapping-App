@@ -1,7 +1,11 @@
 {% extends "base.html" %}
 {% block title %}HOD Dashboard{% endblock %}
 
+{% block sidebar %}{% include "components/sidebar_hod.html" %}{% endblock %}
+
 {% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
 
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
@@ -86,7 +90,9 @@
 <hr class="my-4">
 
 <div class="alert alert-info small">
-⚡ Tip: Create Academic Year → Assign Subjects → Teachers upload marks → Reports auto generate.
+<i class="bi bi-lightning-charge me-1"></i>Tip: Create Academic Year → Assign Subjects → Teachers upload marks → Reports auto generate.
 </div>
 
+</div>
+</div>
 {% endblock %}

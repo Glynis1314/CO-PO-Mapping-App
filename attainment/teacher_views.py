@@ -38,6 +38,7 @@ from attainment.models import (
 from attainment.utils.decorators import teacher_owns_course, semester_unlocked
 from attainment.utils.audit import log_action
 from attainment.utils.attainment_engine import compute_attainment_for_course
+from attainment.utils.rbac import role_required
 
 
 # ------------------------------------------------------------------ helpers
@@ -103,6 +104,7 @@ def _course_progress(course):
 # ==========================================================================
 
 @login_required
+@role_required('TEACHER')
 def teacher_dashboard(request):
     """
     Teacher selects academic year + semester, sees only assigned courses.
@@ -148,6 +150,7 @@ def teacher_dashboard(request):
 # ==========================================================================
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 def course_overview(request, course_id, course=None):
     progress = _course_progress(course)
@@ -166,6 +169,7 @@ def course_overview(request, course_id, course=None):
 # ==========================================================================
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 def manage_cos(request, course_id, course=None):
     """
@@ -183,6 +187,7 @@ def manage_cos(request, course_id, course=None):
 
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 @semester_unlocked
 def create_co(request, course_id, course=None):
@@ -217,6 +222,7 @@ def create_co(request, course_id, course=None):
 
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 @semester_unlocked
 def edit_co(request, course_id, co_id, course=None):
@@ -237,6 +243,7 @@ def edit_co(request, course_id, co_id, course=None):
 
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 @semester_unlocked
 def delete_co(request, course_id, co_id, course=None):
@@ -265,6 +272,7 @@ def delete_co(request, course_id, co_id, course=None):
 # ==========================================================================
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 def manage_assessments(request, course_id, course=None):
     locked = course.semester.is_locked if course.semester else False
@@ -287,6 +295,7 @@ def manage_assessments(request, course_id, course=None):
 
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 @semester_unlocked
 def create_assessment(request, course_id, course=None):
@@ -332,6 +341,7 @@ def create_assessment(request, course_id, course=None):
 
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 @semester_unlocked
 def delete_assessment(request, course_id, assessment_id, course=None):
@@ -349,6 +359,7 @@ def delete_assessment(request, course_id, assessment_id, course=None):
 # ==========================================================================
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 def manage_questions(request, course_id, assessment_id, course=None):
     locked = course.semester.is_locked if course.semester else False
@@ -373,6 +384,7 @@ def manage_questions(request, course_id, assessment_id, course=None):
 
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 @semester_unlocked
 def save_questions(request, course_id, assessment_id, course=None):
@@ -455,6 +467,7 @@ def save_questions(request, course_id, assessment_id, course=None):
 # ==========================================================================
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 def marks_upload_page(request, course_id, assessment_id, course=None):
     locked = course.semester.is_locked if course.semester else False
@@ -476,6 +489,7 @@ def marks_upload_page(request, course_id, assessment_id, course=None):
 
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 @semester_unlocked
 def marks_upload_process(request, course_id, assessment_id, course=None):
@@ -661,6 +675,7 @@ def _confirm_marks(request, course, assessment, q_map):
 # ==========================================================================
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 def co_attainment_results(request, course_id, course=None):
     cfg = _get_config()
@@ -719,6 +734,7 @@ def co_attainment_results(request, course_id, course=None):
 
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 def recalculate_attainment(request, course_id, course=None):
     compute_attainment_for_course(course)
@@ -733,6 +749,7 @@ def recalculate_attainment(request, course_id, course=None):
 # ==========================================================================
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 def cqi_list(request, course_id, course=None):
     cfg = _get_config()
@@ -765,6 +782,7 @@ def cqi_list(request, course_id, course=None):
 
 
 @login_required
+@role_required('TEACHER')
 @teacher_owns_course
 def save_cqi(request, course_id, co_id, course=None):
     if request.method != "POST":
