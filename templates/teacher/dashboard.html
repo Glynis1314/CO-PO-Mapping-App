@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard — DBIT Attainment{% endblock %}
+
+{% block sidebar %}{% include "components/sidebar_teacher.html" %}{% endblock %}
+
+{% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
+
+  <h3 class="mb-1"><i class="bi bi-speedometer2 me-2"></i>Teacher Dashboard</h3>
+  <p class="text-muted mb-4">Welcome, <strong>{{ user_name }}</strong>. Select an academic year and semester to view your assigned courses.</p>
+
+  <!-- Filters -->
+  <form method="get" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">Academic Year</label>
+      <select name="ay" class="form-select" onchange="this.form.submit()">
+        <option value="">— Select —</option>
+        {% for ay in academic_years %}
+          <option value="{{ ay.pk }}" {% if selected_ay == ay.pk %}selected{% endif %}>{{ ay.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label fw-semibold">Semester</label>
+      <select name="sem" class="form-select" onchange="this.form.submit()">
+        <option value="">— Select —</option>
+        {% for s in semesters %}
+          <option value="{{ s.pk }}" {% if selected_sem == s.pk %}selected{% endif %}>
+            Sem {{ s.number }} ({{ s.get_type_display }})
+            {% if s.is_locked %} 🔒{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  {% if selected_ay and selected_sem %}
+    {% if courses_data %}
+    <div class="row g-4">
+      {% for cd in courses_data %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="card-title text-primary mb-0">{{ cd.course.code }}</h5>
+                <p class="text-muted small mb-2">{{ cd.course.name }}</p>
+              </div>
+              {% if cd.course.semester.is_locked %}
+                <span class="badge bg-danger"><i class="bi bi-lock-fill"></i> Locked</span>
+              {% else %}
+                <span class="badge bg-success"><i class="bi bi-unlock-fill"></i> Open</span>
+              {% endif %}
+            </div>
+
+            <!-- Progress -->
+            <ul class="list-unstyled small mb-3">
+              <li>
+                {% if cd.progress.cos_defined %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+                COs defined ({{ cd.progress.co_count }})
+              </li>
+              <li>
+                {% if cd.progress.ia1_created %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+                IA-1
+              </li>
+              <li>
+                {% if cd.progress.ia2_created %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+                IA-2
+              </li>
+              <li>
+                {% if cd.progress.endsem_created %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+                End-Sem
+              </li>
+              <li>
+                {% if cd.progress.questions_mapped %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+                Questions mapped
+              </li>
+              <li>
+                {% if cd.progress.marks_uploaded %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+                Marks uploaded
+              </li>
+              <li>
+                {% if cd.progress.attainment_calculated %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+                Attainment calculated
+              </li>
+            </ul>
+
+            <a href="{% url 'course_overview' cd.course.id %}" class="btn btn-primary btn-sm w-100">
+              <i class="bi bi-arrow-right-circle me-1"></i> Open Course
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      No courses assigned to you for this semester. Contact the HOD.
+    </div>
+    {% endif %}
+  {% elif selected_ay %}
+    <div class="alert alert-info">Select a semester to view your courses.</div>
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}

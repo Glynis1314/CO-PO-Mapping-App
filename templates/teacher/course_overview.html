@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}{{ course.code }} Overview — DBIT Attainment{% endblock %}
+
+{% block sidebar %}{% include "components/sidebar_teacher.html" %}{% endblock %}
+
+{% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
+
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item active">{{ course.code }}</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex align-items-center mb-4">
+    <div>
+      <h3 class="mb-0">{{ course.code }} — {{ course.name }}</h3>
+      <p class="text-muted mb-0">
+        {% if semester %}{{ semester.academic_year.name }} · Sem {{ semester.number }} ({{ semester.get_type_display }}){% endif %}
+        {% if locked %}
+          <span class="badge bg-danger ms-2"><i class="bi bi-lock-fill"></i> Locked</span>
+        {% else %}
+          <span class="badge bg-success ms-2"><i class="bi bi-unlock-fill"></i> Open</span>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Progress checklist -->
+  <div class="card mb-4">
+    <div class="card-header fw-semibold"><i class="bi bi-list-check me-2"></i>Progress Checklist</div>
+    <div class="card-body">
+      <div class="row g-3">
+        {% with p=progress %}
+        <div class="col-md-6 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            {% if p.cos_defined %}<i class="bi bi-check-circle-fill text-success fs-5"></i>{% else %}<i class="bi bi-circle text-muted fs-5"></i>{% endif %}
+            <div>
+              <strong>Course Outcomes</strong><br>
+              <small class="text-muted">{{ p.co_count }} defined</small>
+            </div>
+            <a href="{% url 'manage_cos' course.id %}" class="btn btn-sm btn-outline-primary ms-auto">Manage</a>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            {% if p.ia1_created %}<i class="bi bi-check-circle-fill text-success fs-5"></i>{% else %}<i class="bi bi-circle text-muted fs-5"></i>{% endif %}
+            <div><strong>IA-1</strong></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            {% if p.ia2_created %}<i class="bi bi-check-circle-fill text-success fs-5"></i>{% else %}<i class="bi bi-circle text-muted fs-5"></i>{% endif %}
+            <div><strong>IA-2</strong></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            {% if p.endsem_created %}<i class="bi bi-check-circle-fill text-success fs-5"></i>{% else %}<i class="bi bi-circle text-muted fs-5"></i>{% endif %}
+            <div><strong>End-Sem</strong></div>
+            <a href="{% url 'manage_assessments' course.id %}" class="btn btn-sm btn-outline-primary ms-auto">Manage</a>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            {% if p.questions_mapped %}<i class="bi bi-check-circle-fill text-success fs-5"></i>{% else %}<i class="bi bi-circle text-muted fs-5"></i>{% endif %}
+            <div><strong>Questions Mapped</strong></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            {% if p.marks_uploaded %}<i class="bi bi-check-circle-fill text-success fs-5"></i>{% else %}<i class="bi bi-circle text-muted fs-5"></i>{% endif %}
+            <div><strong>Marks Uploaded</strong></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            {% if p.attainment_calculated %}<i class="bi bi-check-circle-fill text-success fs-5"></i>{% else %}<i class="bi bi-circle text-muted fs-5"></i>{% endif %}
+            <div><strong>Attainment Calculated</strong></div>
+            <a href="{% url 'co_attainment_results' course.id %}" class="btn btn-sm btn-outline-primary ms-auto">View</a>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="d-flex align-items-center gap-2">
+            {% if p.cqi_needed %}
+              {% if p.cqi_submitted %}<i class="bi bi-check-circle-fill text-success fs-5"></i>{% else %}<i class="bi bi-exclamation-circle-fill text-warning fs-5"></i>{% endif %}
+              <div><strong>CQI Action</strong><br><small class="text-muted">Required</small></div>
+              <a href="{% url 'cqi_list' course.id %}" class="btn btn-sm btn-outline-warning ms-auto">Submit</a>
+            {% else %}
+              <i class="bi bi-dash-circle text-muted fs-5"></i>
+              <div><strong>CQI Action</strong><br><small class="text-muted">Not required</small></div>
+            {% endif %}
+          </div>
+        </div>
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick links -->
+  <div class="row g-3">
+    <div class="col-md-4">
+      <a href="{% url 'manage_cos' course.id %}" class="btn btn-outline-primary w-100 py-3">
+        <i class="bi bi-bullseye fs-4 d-block mb-1"></i> Course Outcomes
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="{% url 'manage_assessments' course.id %}" class="btn btn-outline-primary w-100 py-3">
+        <i class="bi bi-journal-text fs-4 d-block mb-1"></i> Assessments
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="{% url 'co_attainment_results' course.id %}" class="btn btn-outline-primary w-100 py-3">
+        <i class="bi bi-bar-chart-line fs-4 d-block mb-1"></i> Attainment
+      </a>
+    </div>
+  </div>
+
+</div>
+</div>
+{% endblock %}

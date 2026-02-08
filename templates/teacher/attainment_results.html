@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}CO Attainment – {{ course.code }} — DBIT Attainment{% endblock %}
+
+{% block sidebar %}{% include "components/sidebar_teacher.html" %}{% endblock %}
+
+{% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
+
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'course_overview' course.id %}">{{ course.code }}</a></li>
+      <li class="breadcrumb-item active">CO Attainment</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>CO Attainment — {{ course.code }}</h4>
+    <a href="{% url 'recalculate_attainment' course.id %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-arrow-clockwise me-1"></i> Recalculate
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="alert alert-info small">
+    <strong>Config:</strong>
+    Target Level = {{ config.po_target_level }} &nbsp;|&nbsp;
+    Weights: IA1={{ config.ia1_weightage }}, IA2={{ config.ia2_weightage }}, EndSem={{ config.end_sem_weightage }} &nbsp;|&nbsp;
+    Direct={{ config.direct_weightage }}, Indirect={{ config.indirect_weightage }} &nbsp;|&nbsp;
+    Thresholds: L3≥{{ config.level3_threshold }}%, L2≥{{ config.level2_threshold }}%, L1≥{{ config.level1_threshold }}%
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0" style="overflow-x:auto">
+      <table class="table table-bordered table-hover mb-0 text-center">
+        <thead class="table-light">
+          <tr>
+            <th rowspan="2" class="align-middle">CO</th>
+            <th colspan="2">IA-1</th>
+            <th colspan="2">IA-2</th>
+            <th colspan="2">End-Sem</th>
+            <th rowspan="2" class="align-middle">Direct</th>
+            <th rowspan="2" class="align-middle">Indirect</th>
+            <th rowspan="2" class="align-middle">Final</th>
+            <th rowspan="2" class="align-middle">Level</th>
+            <th rowspan="2" class="align-middle">Target</th>
+            <th rowspan="2" class="align-middle">Status</th>
+          </tr>
+          <tr>
+            <th>%</th><th>Lvl</th>
+            <th>%</th><th>Lvl</th>
+            <th>%</th><th>Lvl</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr>
+            <td class="fw-semibold text-start"><span class="badge bg-primary">{{ r.co.code }}</span></td>
+            <td>{{ r.ia1_pct }}</td>
+            <td>{{ r.ia1_lvl }}</td>
+            <td>{{ r.ia2_pct }}</td>
+            <td>{{ r.ia2_lvl }}</td>
+            <td>{{ r.end_pct }}</td>
+            <td>{{ r.end_lvl }}</td>
+            <td class="fw-semibold">{{ r.direct }}</td>
+            <td>{{ r.indirect }}</td>
+            <td class="fw-bold">{{ r.final }}</td>
+            <td><span class="badge {% if r.level == 'L3' %}bg-success{% elif r.level == 'L2' %}bg-info{% elif r.level == 'L1' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ r.level }}</span></td>
+            <td>{{ r.target }}</td>
+            <td>
+              {% if r.achieved %}
+                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Achieved</span>
+              {% else %}
+                <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Not Achieved</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="13" class="text-muted py-3">No attainment data yet. Upload marks and questions first.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if results %}
+  <div class="mt-3 text-end">
+    <a href="{% url 'cqi_list' course.id %}" class="btn btn-outline-warning btn-sm">
+      <i class="bi bi-clipboard-check me-1"></i> CQI / Action Taken
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}

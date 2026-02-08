@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Questions – {{ assessment.name }} — DBIT Attainment{% endblock %}
+
+{% block sidebar %}{% include "components/sidebar_teacher.html" %}{% endblock %}
+
+{% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
+
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'course_overview' course.id %}">{{ course.code }}</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'manage_assessments' course.id %}">Assessments</a></li>
+      <li class="breadcrumb-item active">{{ assessment.name }} — Questions</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h4 class="mb-0"><i class="bi bi-link-45deg me-2"></i>{{ assessment.name }} — Question → CO Mapping</h4>
+    {% if locked %}
+      <span class="badge bg-danger"><i class="bi bi-lock-fill"></i> Semester Locked</span>
+    {% endif %}
+  </div>
+  <p class="text-muted mb-4">
+    Assessment total marks: <strong>{{ assessment.total_marks|default:assessment.max_marks }}</strong>
+    &nbsp;|&nbsp; Current question marks sum: <strong id="qsum">{{ total_qmarks }}</strong>
+    {% if marks_mismatch %}
+      <span class="text-danger ms-2"><i class="bi bi-exclamation-triangle"></i> Marks mismatch!</span>
+    {% endif %}
+  </p>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if not locked %}
+  <form method="post" action="{% url 'save_questions' course.id assessment.id %}" id="qform">
+    {% csrf_token %}
+    <div class="card mb-4">
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0" id="qtable">
+          <thead>
+            <tr>
+              <th style="width:60px">#</th>
+              <th>Question Code</th>
+              <th>Max Marks</th>
+              <th>Mapped CO</th>
+              <th style="width:60px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in questions %}
+            <tr>
+              <td class="rownum">{{ forloop.counter }}</td>
+              <td><input type="text" name="question_code" value="{{ q.component_number }}" class="form-control form-control-sm" required></td>
+              <td><input type="number" name="max_marks" value="{{ q.max_marks|floatformat:0 }}" class="form-control form-control-sm mark-input" step="any" min="0.5" required></td>
+              <td>
+                <select name="co_id" class="form-select form-select-sm" required>
+                  <option value="">— Select CO —</option>
+                  {% for co in cos %}
+                    <option value="{{ co.id }}" {% if co.id == q.course_outcome_id %}selected{% endif %}>{{ co.code }} – {{ co.description|truncatewords:8 }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td><button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove"><i class="bi bi-x-lg"></i></button></td>
+            </tr>
+            {% empty %}
+            <!-- One blank row if no questions yet -->
+            <tr>
+              <td class="rownum">1</td>
+              <td><input type="text" name="question_code" value="Q1" class="form-control form-control-sm" required></td>
+              <td><input type="number" name="max_marks" class="form-control form-control-sm mark-input" step="any" min="0.5" required></td>
+              <td>
+                <select name="co_id" class="form-select form-select-sm" required>
+                  <option value="">— Select CO —</option>
+                  {% for co in cos %}
+                    <option value="{{ co.id }}">{{ co.code }} – {{ co.description|truncatewords:8 }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td><button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove"><i class="bi bi-x-lg"></i></button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="button" id="add-row" class="btn btn-outline-secondary">
+        <i class="bi bi-plus-lg me-1"></i> Add Question
+      </button>
+      <button type="submit" class="btn btn-primary ms-auto">
+        <i class="bi bi-save me-1"></i> Save All Questions
+      </button>
+    </div>
+  </form>
+  {% else %}
+  <!-- Read-only view when locked -->
+  <div class="card">
+    <div class="card-body p-0">
+      <table class="table mb-0">
+        <thead>
+          <tr><th>#</th><th>Code</th><th>Max Marks</th><th>CO</th></tr>
+        </thead>
+        <tbody>
+          {% for q in questions %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ q.component_number }}</td>
+            <td>{{ q.max_marks }}</td>
+            <td><span class="badge bg-primary">{{ q.course_outcome.code }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-muted text-center py-3">No questions defined.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const tbody = document.querySelector("#qtable tbody");
+  const addBtn = document.getElementById("add-row");
+  if (!addBtn) return;
+
+  // CO options HTML (cached from first row)
+  const firstSelect = tbody.querySelector('select[name="co_id"]');
+  const coOptions = firstSelect ? firstSelect.innerHTML : '<option value="">—</option>';
+
+  function renumber() {
+    tbody.querySelectorAll("tr").forEach((tr, i) => {
+      tr.querySelector(".rownum").textContent = i + 1;
+    });
+    updateSum();
+  }
+
+  function updateSum() {
+    let sum = 0;
+    tbody.querySelectorAll(".mark-input").forEach(inp => {
+      sum += parseFloat(inp.value) || 0;
+    });
+    const el = document.getElementById("qsum");
+    if (el) el.textContent = sum;
+  }
+
+  addBtn.addEventListener("click", function() {
+    const n = tbody.querySelectorAll("tr").length + 1;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="rownum">${n}</td>
+      <td><input type="text" name="question_code" value="Q${n}" class="form-control form-control-sm" required></td>
+      <td><input type="number" name="max_marks" class="form-control form-control-sm mark-input" step="any" min="0.5" required></td>
+      <td><select name="co_id" class="form-select form-select-sm" required>${coOptions}</select></td>
+      <td><button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove"><i class="bi bi-x-lg"></i></button></td>
+    `;
+    tbody.appendChild(tr);
+    renumber();
+  });
+
+  tbody.addEventListener("click", function(e) {
+    const btn = e.target.closest(".remove-row");
+    if (btn) {
+      btn.closest("tr").remove();
+      renumber();
+    }
+  });
+
+  tbody.addEventListener("input", function(e) {
+    if (e.target.classList.contains("mark-input")) updateSum();
+  });
+});
+</script>
+{% endblock %}

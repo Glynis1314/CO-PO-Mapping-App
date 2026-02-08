@@ -6,16 +6,44 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Count
+from attainment.utils.rbac import role_required
 
 
+def index_view(request):
+    """Landing page: if authenticated, redirect to role dashboard; else show login."""
+    if request.user.is_authenticated:
+        profile = getattr(request.user, "profile", None)
+        if profile:
+            if profile.role == "ADMIN":
+                return redirect("admin_dashboard")
+            elif profile.role == "HOD":
+                return redirect("dashboard_hod")
+            elif profile.role == "TEACHER":
+                return redirect("teacher_dashboard")
+    return render(request, "index.html")
+
+
+@login_required
+@role_required('HOD', 'ADMIN')
 def dashboard_hod(request):
-    return render(request, "dashboard_hod.html")
+    from .models import AcademicYear, Course, TeacherCourseAssignment, COAttainment
+    context = {
+        'year_count': AcademicYear.objects.count(),
+        'course_count': Course.objects.count(),
+        'teacher_count': TeacherCourseAssignment.objects.values('teacher').distinct().count(),
+        'low_co_count': COAttainment.objects.filter(final_score__lt=2).count(),
+    }
+    return render(request, 'dashboard_hod.html', context)
 
 
+@login_required
+@role_required('ADMIN')
 def dashboard_principal(request):
     return principal_dashboard(request)
 
 
+@login_required
+@role_required('HOD', 'ADMIN')
 def upload_marks(request, assessment_id):
     if request.method == "POST" and request.FILES.get('csv_file'):
         csv_file = request.FILES['csv_file']
@@ -71,11 +99,15 @@ def calculate_co_attainment(assessment_id):
         
 
 
+@login_required
+@role_required('HOD', 'ADMIN')
 def academic_years_list(request):
     # This renders the table with existing data
     years = AcademicYear.objects.all()
     return render(request, 'academic_years.html', {'years': years})
 
+@login_required
+@role_required('HOD', 'ADMIN')
 def create_academic_year(request):
     if request.method == "POST":
         year_range = request.POST.get('name')
@@ -94,6 +126,8 @@ def create_academic_year(request):
         
         return redirect('academic_years_list')
     
+@login_required
+@role_required('HOD', 'ADMIN')
 def assign_subjects_view(request):
     """Renders the assignment page with existing data."""
     context = {
@@ -103,6 +137,8 @@ def assign_subjects_view(request):
     }
     return render(request, 'assign_subjects.html', context)
 
+@login_required
+@role_required('HOD', 'ADMIN')
 def assign_subject_action(request):
     """Handles the POST request to save a new assignment."""
     if request.method == "POST":
@@ -121,22 +157,11 @@ def assign_subject_action(request):
             
     return redirect('assign_subjects')
 
-@login_required
-def teacher_dashboard(request):
-    # Fetch only the subjects assigned to the logged-in teacher
-    assigned_courses = TeacherCourseAssignment.objects.filter(teacher=request.user)
-    
-    # We can also fetch the CO status for these courses for a quick overview
-    # This helps show "Completion Status" on the dashboard
-    context = {
-        'assignments': assigned_courses,
-        'user_name': request.user.get_full_name() or request.user.username,
-    }
-    return render(request, 'teacher/dashboard.html', context)
-
 
 
 # The logic for Principal dashboard
+@login_required
+@role_required('ADMIN')
 def principal_dashboard(request):
     # --- Real Summary Stats ---
     # Count total departments in the system 
@@ -185,9 +210,10 @@ def principal_dashboard(request):
         'low_cos_count': low_cos_count,
         'dept_stats': dept_stats
     }
-    return render(request, 'principal/dashboard.html', context)
+    return render(request, 'dashboard_principal.html', context)
 
 
+@login_required
 def attainment_report_view(request):
     # Fetch all years and subjects for the dropdowns
     academic_years = AcademicYear.objects.all()
@@ -222,6 +248,7 @@ def attainment_report_view(request):
     return render(request, 'reports/attainment_report.html', context)
 
 
+@login_required
 def gap_analysis_view(request):
 
     departments = Department.objects.all()

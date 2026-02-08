@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Semesters — Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_admin.html" %}</div>
+  <div class="col-md-9">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">Semesters</h3>
+        <div class="text-muted small">Type (ODD/EVEN) is auto-derived from the number. Lock prevents teacher edits.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createSemModal">
+        <i class="bi bi-plus-lg me-1"></i>New Semester
+      </button>
+    </div>
+
+    {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filter by AY -->
+    <form method="get" class="mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-auto">
+          <label class="form-label small mb-1">Academic Year</label>
+          <select class="form-select form-select-sm" name="ay" onchange="this.form.submit()">
+            <option value="">All Years</option>
+            {% for ay in academic_years %}
+            <option value="{{ ay.pk }}" {% if selected_ay == ay.pk %}selected{% endif %}>
+              {{ ay.name }}{% if ay.is_active %} (Active){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Academic Year</th>
+            <th class="text-center">Number</th>
+            <th class="text-center">Type</th>
+            <th class="text-center">Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sem in semesters %}
+          <tr>
+            <td>{{ sem.academic_year.name }}</td>
+            <td class="text-center"><strong>Sem {{ sem.number }}</strong></td>
+            <td class="text-center">
+              <span class="badge {% if sem.type == 'ODD' %}bg-primary{% else %}bg-secondary{% endif %}">
+                {{ sem.type }}
+              </span>
+            </td>
+            <td class="text-center">
+              {% if sem.is_locked %}
+                <span class="badge bg-danger"><i class="bi bi-lock-fill me-1"></i>Locked</span>
+              {% else %}
+                <span class="badge bg-success"><i class="bi bi-unlock me-1"></i>Open</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <form method="post" action="{% url 'admin_toggle_semester_lock' sem.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-outline-{% if sem.is_locked %}success{% else %}warning{% endif %} btn-sm" title="Toggle lock">
+                  <i class="bi bi-{% if sem.is_locked %}unlock{% else %}lock{% endif %}"></i>
+                  {% if sem.is_locked %}Unlock{% else %}Lock{% endif %}
+                </button>
+              </form>
+              <button class="btn btn-outline-danger btn-sm" title="Delete"
+                      data-bs-toggle="modal" data-bs-target="#deleteSemModal{{ sem.pk }}">
+                <i class="bi bi-trash"></i>
+              </button>
+
+              <!-- Delete modal -->
+              <div class="modal fade" id="deleteSemModal{{ sem.pk }}" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h6 class="modal-title">Delete Sem {{ sem.number }} ({{ sem.academic_year.name }})?</h6>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-muted small">
+                      Courses under this semester must be removed first.
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      <form method="post" action="{% url 'admin_delete_semester' sem.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">No semesters found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createSemModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'admin_create_semester' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">New Semester</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Academic Year <span class="text-danger">*</span></label>
+            <select class="form-select" name="academic_year_id" required>
+              <option value="">— Select Year —</option>
+              {% for ay in academic_years %}
+              <option value="{{ ay.pk }}">{{ ay.name }}{% if ay.is_active %} (Active){% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Semester Number <span class="text-danger">*</span></label>
+            <select class="form-select" name="number" required>
+              <option value="">— Select —</option>
+              {% for n in "12345678" %}
+              <option value="{{ n }}">Semester {{ n }} ({% if n == "1" or n == "3" or n == "5" or n == "7" %}ODD{% else %}EVEN{% endif %})</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Type (ODD/EVEN) is derived automatically.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

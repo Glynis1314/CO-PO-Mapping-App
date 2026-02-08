@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — Attainment{% endblock %}
+
+{% block content %}
+<div class="row">
+
+  <!-- Sidebar -->
+  <div class="col-md-3">
+    {% include "components/sidebar_admin.html" %}
+  </div>
+
+  <!-- Main content -->
+  <div class="col-md-9">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">Admin Dashboard</h3>
+        <div class="text-muted small">
+          Manage academic years, departments, programs, semesters & courses.
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4 col-lg-2">
+        <div class="card shadow-sm text-center">
+          <div class="card-body">
+            <div class="h3 mb-0 text-primary">{{ ay_count }}</div>
+            <div class="small text-muted">Academic Years</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <div class="card shadow-sm text-center">
+          <div class="card-body">
+            <div class="h3 mb-0 text-primary">{{ dept_count }}</div>
+            <div class="small text-muted">Departments</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <div class="card shadow-sm text-center">
+          <div class="card-body">
+            <div class="h3 mb-0 text-primary">{{ program_count }}</div>
+            <div class="small text-muted">Programs</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <div class="card shadow-sm text-center">
+          <div class="card-body">
+            <div class="h3 mb-0 text-primary">{{ semester_count }}</div>
+            <div class="small text-muted">Semesters</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <div class="card shadow-sm text-center">
+          <div class="card-body">
+            <div class="h3 mb-0 text-primary">{{ course_count }}</div>
+            <div class="small text-muted">Courses</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if active_ay %}
+    <div class="alert alert-info mb-4">
+      <i class="bi bi-calendar-check me-1"></i>
+      Active Academic Year: <strong>{{ active_ay.name }}</strong>
+    </div>
+    {% else %}
+    <div class="alert alert-warning mb-4">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      No active academic year set. <a href="{% url 'admin_academic_years' %}">Set one now</a>.
+    </div>
+    {% endif %}
+
+    <!-- Quick Links -->
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6><i class="bi bi-calendar3 me-2"></i>Academic Years</h6>
+            <p class="text-muted small mb-2">Create & manage academic years. Only one can be active.</p>
+            <a href="{% url 'admin_academic_years' %}" class="btn btn-outline-primary btn-sm">Manage</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6><i class="bi bi-building me-2"></i>Departments</h6>
+            <p class="text-muted small mb-2">Add departments and mark the First Year department.</p>
+            <a href="{% url 'admin_departments' %}" class="btn btn-outline-primary btn-sm">Manage</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6><i class="bi bi-mortarboard me-2"></i>Programs</h6>
+            <p class="text-muted small mb-2">Create programs under departments.</p>
+            <a href="{% url 'admin_programs' %}" class="btn btn-outline-primary btn-sm">Manage</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6><i class="bi bi-hash me-2"></i>Semesters</h6>
+            <p class="text-muted small mb-2">Create semesters (1-8). Lock when finalized.</p>
+            <a href="{% url 'admin_semesters' %}" class="btn btn-outline-primary btn-sm">Manage</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6><i class="bi bi-book me-2"></i>Courses</h6>
+            <p class="text-muted small mb-2">Add courses with code, semester, department & program.</p>
+            <a href="{% url 'admin_courses' %}" class="btn btn-outline-primary btn-sm">Manage</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6><i class="bi bi-people me-2"></i>Users</h6>
+            <p class="text-muted small mb-2">Manage teachers, HODs and admin accounts.</p>
+            <a href="{% url 'settings_users' %}" class="btn btn-outline-primary btn-sm">Manage</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

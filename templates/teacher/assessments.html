@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Assessments – {{ course.code }} — DBIT Attainment{% endblock %}
+
+{% block sidebar %}{% include "components/sidebar_teacher.html" %}{% endblock %}
+
+{% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
+
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'course_overview' course.id %}">{{ course.code }}</a></li>
+      <li class="breadcrumb-item active">Assessments</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-journal-text me-2"></i>Assessments — {{ course.code }}</h4>
+    {% if locked %}
+      <span class="badge bg-danger"><i class="bi bi-lock-fill"></i> Semester Locked</span>
+    {% endif %}
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Existing assessments -->
+  <div class="row g-4 mb-4">
+    {% for a in assessments %}
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title text-primary">{{ a.name }}</h5>
+          <p class="text-muted small mb-2">Type: {{ a.get_assessment_type_display }}</p>
+          <p class="mb-1"><strong>Total Marks:</strong> {{ a.total_marks|default:a.max_marks }}</p>
+          {% if a.date %}<p class="mb-1"><strong>Date:</strong> {{ a.date|date:"d M Y" }}</p>{% endif %}
+
+          <div class="d-grid gap-2 mt-3">
+            <a href="{% url 'manage_questions' course.id a.id %}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-link-45deg me-1"></i> Questions & CO Mapping
+            </a>
+            <a href="{% url 'marks_upload_page' course.id a.id %}" class="btn btn-outline-success btn-sm">
+              <i class="bi bi-upload me-1"></i> Upload Marks
+            </a>
+            {% if not locked %}
+            <form method="post" action="{% url 'delete_assessment' course.id a.id %}"
+                  onsubmit="return confirm('Delete {{ a.name }}? This also removes its questions and marks.')">
+              {% csrf_token %}
+              <button class="btn btn-outline-danger btn-sm w-100"><i class="bi bi-trash me-1"></i> Delete</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="alert alert-info">No assessments created yet. Use the form below to add one.</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Create new assessment -->
+  {% if not locked and available_types %}
+  <div class="card">
+    <div class="card-header fw-semibold"><i class="bi bi-plus-circle me-2"></i>Create Assessment</div>
+    <div class="card-body">
+      <form method="post" action="{% url 'create_assessment' course.id %}">
+        {% csrf_token %}
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">Type <span class="text-danger">*</span></label>
+            <select name="assessment_type" class="form-select" required>
+              <option value="">— Select —</option>
+              {% for val, label in available_types %}
+                <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Total Marks <span class="text-danger">*</span></label>
+            <input type="number" name="total_marks" class="form-control" min="1" required placeholder="e.g. 30">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Date</label>
+            <input type="date" name="date" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-plus-lg me-1"></i> Create
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% elif not locked %}
+  <div class="alert alert-secondary">All assessment types (IA-1, IA-2, End-Sem) have been created for this course.</div>
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}

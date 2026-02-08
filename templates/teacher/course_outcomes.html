@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Course Outcomes – {{ course.code }} — DBIT Attainment{% endblock %}
+
+{% block sidebar %}{% include "components/sidebar_teacher.html" %}{% endblock %}
+
+{% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
+
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'course_overview' course.id %}">{{ course.code }}</a></li>
+      <li class="breadcrumb-item active">Course Outcomes</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-bullseye me-2"></i>Course Outcomes — {{ course.code }}</h4>
+    {% if locked %}
+      <span class="badge bg-danger"><i class="bi bi-lock-fill"></i> Semester Locked</span>
+    {% endif %}
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Existing COs -->
+  <div class="card mb-4">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th style="width:80px">Code</th>
+            <th>Description</th>
+            <th style="width:140px">Bloom Level</th>
+            {% if not locked %}<th style="width:140px">Actions</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for co in cos %}
+          <tr>
+            <td><span class="badge bg-primary">{{ co.code }}</span></td>
+            <td>
+              {% if not locked %}
+              <form method="post" action="{% url 'edit_co' course.id co.id %}" class="d-flex gap-2 align-items-center">
+                {% csrf_token %}
+                <input type="text" name="description" value="{{ co.description }}" class="form-control form-control-sm" required>
+                <select name="bloom_level" class="form-select form-select-sm" style="width:140px">
+                  <option value="">—</option>
+                  {% for b in bloom_choices %}
+                    <option value="{{ b }}" {% if b in co.bloom_levels %}selected{% endif %}>{{ b }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-outline-success" title="Save"><i class="bi bi-check-lg"></i></button>
+              </form>
+              {% else %}
+                {{ co.description }}
+              {% endif %}
+            </td>
+            {% if not locked %}
+            <td>
+              {% if co.bloom_levels %}{{ co.bloom_levels|join:", " }}{% else %}—{% endif %}
+            </td>
+            <td>
+              <form method="post" action="{% url 'delete_co' course.id co.id %}" class="d-inline"
+                    onsubmit="return confirm('Delete {{ co.code }}?')">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+              </form>
+            </td>
+            {% else %}
+            <td>{% if co.bloom_levels %}{{ co.bloom_levels|join:", " }}{% else %}—{% endif %}</td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-muted text-center py-3">No course outcomes defined yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add new CO -->
+  {% if not locked %}
+  <div class="card">
+    <div class="card-header fw-semibold"><i class="bi bi-plus-circle me-2"></i>Add New Course Outcome</div>
+    <div class="card-body">
+      <form method="post" action="{% url 'create_co' course.id %}">
+        {% csrf_token %}
+        <div class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label class="form-label">Description <span class="text-danger">*</span></label>
+            <textarea name="description" class="form-control" rows="2" required placeholder="e.g., Understand the principles of OOP"></textarea>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Bloom Level</label>
+            <select name="bloom_level" class="form-select">
+              <option value="">— Select —</option>
+              {% for b in bloom_choices %}
+                <option value="{{ b }}">{{ b }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-plus-lg me-1"></i> Add CO
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}
