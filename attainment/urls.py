@@ -3,6 +3,7 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
+from . import teacher_views as tv
 
 urlpatterns = [
 
@@ -20,8 +21,8 @@ urlpatterns = [
          name="dashboard_hod"),
 
     path('teacher/dashboard/',
-         TemplateView.as_view(template_name="dashboard_teacher.html"),
-         name="dashboard_teacher"),
+         tv.teacher_dashboard,
+         name="teacher_dashboard"),
 
     path('principal/dashboard/',
          TemplateView.as_view(template_name="dashboard_principal.html"),
@@ -47,38 +48,67 @@ urlpatterns = [
          name="settings_users"),
 
     # HOD Reports
-#     path('reports/attainment/',
-#          TemplateView.as_view(template_name="attainment_report.html"),
-#          name="attainment_report"),
-    
-#     path('reports/gap-analysis/', views.gap_analysis_view, name='gap_analysis'),
-
     path('reports/attainment/', views.attainment_report_view, name='attainment_report'),
-    
-    # Add this line to resolve the NoReverseMatch error
     path('reports/gap-analysis/', views.gap_analysis_view, name='gap_analysis'),
-    
 
     # Evidence
     path('evidence/',
          TemplateView.as_view(template_name="evidence_upload.html"),
          name="evidence_upload"),
 
+    # ===========================
+    # TEACHER MODULE – full CRUD
+    # ===========================
+
+    # A. Course overview
+    path('teacher/course/<int:course_id>/',
+         tv.course_overview, name="course_overview"),
+
+    # B. Course Outcomes CRUD
+    path('teacher/course/<int:course_id>/cos/',
+         tv.manage_cos, name="manage_cos"),
+    path('teacher/course/<int:course_id>/cos/create/',
+         tv.create_co, name="create_co"),
+    path('teacher/course/<int:course_id>/cos/<int:co_id>/edit/',
+         tv.edit_co, name="edit_co"),
+    path('teacher/course/<int:course_id>/cos/<int:co_id>/delete/',
+         tv.delete_co, name="delete_co"),
+
+    # C. Assessments CRUD
+    path('teacher/course/<int:course_id>/assessments/',
+         tv.manage_assessments, name="manage_assessments"),
+    path('teacher/course/<int:course_id>/assessments/create/',
+         tv.create_assessment, name="create_assessment"),
+    path('teacher/course/<int:course_id>/assessments/<int:assessment_id>/delete/',
+         tv.delete_assessment, name="delete_assessment"),
+
+    # D. Question-to-CO mapping
+    path('teacher/course/<int:course_id>/assessments/<int:assessment_id>/questions/',
+         tv.manage_questions, name="manage_questions"),
+    path('teacher/course/<int:course_id>/assessments/<int:assessment_id>/questions/save/',
+         tv.save_questions, name="save_questions"),
+
+    # E. Marks upload
+    path('teacher/course/<int:course_id>/assessments/<int:assessment_id>/marks/',
+         tv.marks_upload_page, name="marks_upload_page"),
+    path('teacher/course/<int:course_id>/assessments/<int:assessment_id>/marks/upload/',
+         tv.marks_upload_process, name="marks_upload_process"),
+
+    # F. CO Attainment results (read-only)
+    path('teacher/course/<int:course_id>/attainment/',
+         tv.co_attainment_results, name="co_attainment_results"),
+    path('teacher/course/<int:course_id>/attainment/recalculate/',
+         tv.recalculate_attainment, name="recalculate_attainment"),
+
+    # G. CQI / Action Taken
+    path('teacher/course/<int:course_id>/cqi/',
+         tv.cqi_list, name="cqi_list"),
+    path('teacher/course/<int:course_id>/cqi/<int:co_id>/save/',
+         tv.save_cqi, name="save_cqi"),
+
     # -------------------------
-    # Teacher pages
+    # Legacy static teacher pages (kept for backward compat)
     # -------------------------
-    path('teacher/create-assessment/',
-         TemplateView.as_view(template_name="create_assessment.html"),
-         name="create_assessment"),
-
-    path('teacher/assessments/',
-         TemplateView.as_view(template_name="assessment_list.html"),
-         name="assessment_list"),
-
-    path('teacher/upload-marks/',
-         TemplateView.as_view(template_name="upload_marks.html"),
-         name="upload_marks"),
-
     path('teacher/co-mapping/',
          TemplateView.as_view(template_name="co_mapping.html"),
          name="co_mapping"),
@@ -95,9 +125,6 @@ urlpatterns = [
          TemplateView.as_view(template_name="import_sample.html"),
          name="import_sample"),
 
-    # -------------------------
-    # Sample Pages
-    # -------------------------
     path('samples/',
          TemplateView.as_view(template_name="import_sample.html"),
          name="samples"),

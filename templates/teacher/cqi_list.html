@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}CQI / Action Taken – {{ course.code }} — DBIT Attainment{% endblock %}
+
+{% block sidebar %}{% include "components/sidebar_teacher.html" %}{% endblock %}
+
+{% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
+
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'course_overview' course.id %}">{{ course.code }}</a></li>
+      <li class="breadcrumb-item active">CQI / Action Taken</li>
+    </ol>
+  </nav>
+
+  <h4 class="mb-4"><i class="bi bi-clipboard-check me-2"></i>CQI / Action Taken — {{ course.code }}</h4>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% for item in items %}
+  <div class="card mb-3 {% if item.below_target %}border-warning{% endif %}">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <span class="badge bg-primary me-2">{{ item.co.code }}</span>
+        <span class="text-muted small">{{ item.co.description|truncatewords:15 }}</span>
+      </div>
+      <div>
+        <span class="me-3">Final Score: <strong>{{ item.final_score }}</strong> / Target: {{ item.target }}</span>
+        {% if item.below_target %}
+          <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Below Target</span>
+        {% else %}
+          <span class="badge bg-success"><i class="bi bi-check-circle"></i> Achieved</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if item.below_target %}
+    <div class="card-body">
+      <form method="post" action="{% url 'save_cqi' course.id item.co.id %}">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-12">
+            <label class="form-label fw-semibold">Action Taken / Issue Analysis <span class="text-danger">*</span></label>
+            <textarea name="action_taken" class="form-control" rows="3" required placeholder="Describe the issue and the action taken to address low attainment...">{% if item.cqi %}{{ item.cqi.action_taken }}{% endif %}</textarea>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Remarks / Proposed Improvement</label>
+            <textarea name="remarks" class="form-control" rows="2" placeholder="Optional: proposed improvements for next semester...">{% if item.cqi %}{{ item.cqi.remarks }}{% endif %}</textarea>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+              <option value="PENDING" {% if item.cqi and item.cqi.status == 'PENDING' %}selected{% endif %}>Planned</option>
+              <option value="REVIEWED" {% if item.cqi and item.cqi.status == 'REVIEWED' %}selected{% endif %}>Implemented</option>
+              <option value="ACCEPTED" {% if item.cqi and item.cqi.status == 'ACCEPTED' %}selected{% endif %}>Verified</option>
+            </select>
+          </div>
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>
+              {% if item.cqi %}Update{% else %}Submit{% endif %} CQI
+            </button>
+          </div>
+        </div>
+      </form>
+
+      {% if item.cqi and item.cqi.reviewed_by %}
+      <hr>
+      <div class="small text-muted">
+        <strong>HOD Review:</strong> {{ item.cqi.review_notes|default:"No notes" }}
+        <br>Reviewed by {{ item.cqi.reviewed_by }} on {{ item.cqi.reviewed_at|date:"d M Y" }}
+      </div>
+      {% endif %}
+    </div>
+    {% elif item.cqi %}
+    <div class="card-body">
+      <p class="mb-1"><strong>Action:</strong> {{ item.cqi.action_taken }}</p>
+      {% if item.cqi.remarks %}<p class="mb-1"><strong>Remarks:</strong> {{ item.cqi.remarks }}</p>{% endif %}
+      <span class="badge bg-info">{{ item.cqi.get_status_display }}</span>
+    </div>
+    {% endif %}
+  </div>
+  {% empty %}
+  <div class="alert alert-info">No course outcomes found. Define COs and compute attainment first.</div>
+  {% endfor %}
+
+</div>
+</div>
+{% endblock %}

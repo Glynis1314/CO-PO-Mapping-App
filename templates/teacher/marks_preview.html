@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Marks Preview – {{ assessment.name }} — DBIT Attainment{% endblock %}
+
+{% block sidebar %}{% include "components/sidebar_teacher.html" %}{% endblock %}
+
+{% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
+
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'course_overview' course.id %}">{{ course.code }}</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'marks_upload_page' course.id assessment.id %}">Upload Marks</a></li>
+      <li class="breadcrumb-item active">Preview</li>
+    </ol>
+  </nav>
+
+  <h4 class="mb-3"><i class="bi bi-eye me-2"></i>Marks Preview — {{ assessment.name }}</h4>
+  <p class="text-muted">
+    File: <strong>{{ file_name }}</strong> &nbsp;|&nbsp;
+    Valid rows: <strong>{{ total_rows }}</strong>
+  </p>
+
+  {% if errors %}
+  <div class="alert alert-danger">
+    <h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-1"></i> Validation Errors ({{ errors|length }})</h6>
+    <ul class="mb-0 small">
+      {% for e in errors %}
+        <li>{{ e }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if parsed_rows %}
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Sample Data (first 20 rows)</div>
+    <div class="card-body p-0" style="overflow-x:auto">
+      <table class="table table-sm table-striped mb-0">
+        <thead>
+          <tr>
+            <th>RollNo</th>
+            {% for q in questions %}
+              <th>{{ q.component_number }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in parsed_rows %}
+          <tr>
+            <td>{{ row.roll }}</td>
+            {% for q in questions %}
+              <td>{{ row.marks|dictsort:q.component_number }}{% with qcode=q.component_number %}{% for k,v in row.marks.items %}{% if k == qcode %}{{ v }}{% endif %}{% endfor %}{% endwith %}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Confirm -->
+  <div class="card border-primary">
+    <div class="card-body text-center">
+      <p class="mb-3">
+        <i class="bi bi-info-circle text-primary me-1"></i>
+        This will <strong>replace all existing marks</strong> for {{ assessment.name }} and recalculate attainment.
+      </p>
+      <form method="post" action="{% url 'marks_upload_process' course.id assessment.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="confirm" value="1">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="bi bi-check-circle me-1"></i> Confirm &amp; Save {{ total_rows }} Students
+        </button>
+        <a href="{% url 'marks_upload_page' course.id assessment.id %}" class="btn btn-outline-secondary btn-lg ms-2">Cancel</a>
+      </form>
+    </div>
+  </div>
+  {% elif not errors %}
+  <div class="alert alert-warning">No valid rows found in the file.</div>
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}

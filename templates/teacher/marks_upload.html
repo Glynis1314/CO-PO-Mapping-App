@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Upload Marks – {{ assessment.name }} — DBIT Attainment{% endblock %}
+
+{% block sidebar %}{% include "components/sidebar_teacher.html" %}{% endblock %}
+
+{% block content %}
+<div class="container-main-offset">
+<div class="container py-4">
+
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'teacher_dashboard' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'course_overview' course.id %}">{{ course.code }}</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'manage_assessments' course.id %}">Assessments</a></li>
+      <li class="breadcrumb-item active">{{ assessment.name }} — Upload Marks</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h4 class="mb-0"><i class="bi bi-upload me-2"></i>Upload Marks — {{ assessment.name }}</h4>
+    {% if locked %}
+      <span class="badge bg-danger"><i class="bi bi-lock-fill"></i> Semester Locked</span>
+    {% endif %}
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Expected format -->
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Expected CSV Format</div>
+    <div class="card-body">
+      {% if questions %}
+      <p class="mb-2">The CSV must have a header row with <code>RollNo</code> followed by the question codes:</p>
+      <div class="bg-light p-2 rounded font-monospace small">
+        RollNo{% for q in questions %},{{ q.component_number }}{% endfor %}
+      </div>
+      <p class="text-muted small mt-2">Missing marks will be treated as zero. Marks exceeding max will be rejected.</p>
+      {% else %}
+      <div class="alert alert-warning mb-0">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        No questions defined for this assessment.
+        <a href="{% url 'manage_questions' course.id assessment.id %}">Define questions first</a>.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Upload form -->
+  {% if not locked and questions %}
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Upload File</div>
+    <div class="card-body">
+      <form method="post" action="{% url 'marks_upload_process' course.id assessment.id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3 align-items-end">
+          <div class="col-md-8">
+            <label class="form-label">CSV File <span class="text-danger">*</span></label>
+            <input type="file" name="file" class="form-control" accept=".csv" required>
+          </div>
+          <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-cloud-arrow-up me-1"></i> Upload & Preview
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Upload history -->
+  {% if uploads %}
+  <div class="card">
+    <div class="card-header fw-semibold">Recent Uploads</div>
+    <div class="card-body p-0">
+      <table class="table table-sm mb-0">
+        <thead><tr><th>File</th><th>Uploaded By</th><th>Date</th><th>Records</th></tr></thead>
+        <tbody>
+          {% for u in uploads %}
+          <tr>
+            <td>{{ u.file_name }}</td>
+            <td>{{ u.uploaded_by }}</td>
+            <td>{{ u.uploaded_at|date:"d M Y H:i" }}</td>
+            <td>{{ u.record_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}

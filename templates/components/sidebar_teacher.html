@@ -1,34 +1,52 @@
 <nav class="sidebar d-flex flex-column">
 	<ul class="nav">
 		<li class="nav-item">
-			<a class="nav-link" href="/teacher/dashboard/"
-				><i class="bi bi-person-bounding-box"></i
-				><span class="label">Dashboard</span></a
-			>
+			<a class="nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}" href="{% url 'teacher_dashboard' %}">
+				<i class="bi bi-speedometer2"></i>
+				<span class="label">Dashboard</span>
+			</a>
+		</li>
+		{% if course %}
+		<li class="nav-item mt-3">
+			<small class="text-uppercase px-3" style="color:var(--sidebar-text-muted);font-size:.7rem;letter-spacing:1px;">{{ course.code }}</small>
 		</li>
 		<li class="nav-item">
-			<a class="nav-link" href="/teacher/create-assessment/"
-				><i class="bi bi-file-earmark-plus"></i
-				><span class="label">Create Assessment</span></a
-			>
+			<a class="nav-link {% if request.resolver_match.url_name == 'course_overview' %}active{% endif %}" href="{% url 'course_overview' course.id %}">
+				<i class="bi bi-info-circle"></i>
+				<span class="label">Overview</span>
+			</a>
 		</li>
 		<li class="nav-item">
-			<a class="nav-link" href="/teacher/assessments/"
-				><i class="bi bi-journal-text"></i
-				><span class="label">Assessments</span></a
-			>
+			<a class="nav-link {% if request.resolver_match.url_name == 'manage_cos' %}active{% endif %}" href="{% url 'manage_cos' course.id %}">
+				<i class="bi bi-bullseye"></i>
+				<span class="label">Course Outcomes</span>
+			</a>
 		</li>
 		<li class="nav-item">
-			<a class="nav-link" href="/teacher/upload-marks/"
-				><i class="bi bi-upload"></i><span class="label">Upload Marks</span></a
-			>
+			<a class="nav-link {% if 'assessment' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'manage_assessments' course.id %}">
+				<i class="bi bi-journal-text"></i>
+				<span class="label">Assessments</span>
+			</a>
 		</li>
 		<li class="nav-item">
-			<a class="nav-link" href="/teacher/co-mapping/"
-				><i class="bi bi-link-45deg"></i
-				><span class="label">CO Mapping</span></a
-			>
+			<a class="nav-link {% if request.resolver_match.url_name == 'co_attainment_results' %}active{% endif %}" href="{% url 'co_attainment_results' course.id %}">
+				<i class="bi bi-bar-chart-line"></i>
+				<span class="label">Attainment</span>
+			</a>
 		</li>
-		<div class="sidebar-footer small">You: Guest</div>
+		<li class="nav-item">
+			<a class="nav-link {% if request.resolver_match.url_name == 'cqi_list' %}active{% endif %}" href="{% url 'cqi_list' course.id %}">
+				<i class="bi bi-clipboard-check"></i>
+				<span class="label">CQI / Action</span>
+			</a>
+		</li>
+		{% endif %}
 	</ul>
+	<div class="sidebar-footer small mt-auto">
+		{% if request.user.is_authenticated %}
+			{{ request.user.get_full_name|default:request.user.username }}
+		{% else %}
+			Guest
+		{% endif %}
+	</div>
 </nav>
