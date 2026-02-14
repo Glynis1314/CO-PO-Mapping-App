@@ -12,6 +12,9 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.http import JsonResponse
 
+from django.contrib.auth.models import User
+from django.utils import timezone
+
 from attainment.models import (
     AcademicYear,
     Semester,
@@ -20,6 +23,8 @@ from attainment.models import (
     Program,
     Course,
     TeacherCourseAssignment,
+    UserProfile,
+    Role,
 )
 from attainment.utils.rbac import role_required
 from attainment.utils.audit import log_action
@@ -585,6 +590,139 @@ def admin_delete_course(request, course_id):
     log_action(request.user, "DELETE", "Course", course_id, f"Deleted {code}")
     messages.success(request, f"Course '{code}' deleted.")
     return redirect("admin_courses")
+
+
+# ══════════════════════════════════════════════════════════════
+#  F. USERS (Admin user management)
+# ═════════════════════════════════════════════════════════════=
+
+@login_required
+@role_required('ADMIN')
+def admin_users(request):
+    """List users and show create/edit options."""
+    users = User.objects.select_related('profile').order_by('-is_active', 'username')
+    departments = Department.objects.all().order_by('name')
+    roles = Role.choices
+    return render(request, 'admin_panel/users.html', {
+        'users': users,
+        'departments': departments,
+        'roles': roles,
+    })
+
+
+@login_required
+@role_required('ADMIN')
+def admin_create_user(request):
+    if request.method != 'POST':
+        return redirect('admin_users')
+
+    full_name = request.POST.get('full_name', '').strip()
+    email = request.POST.get('email', '').strip().lower()
+    password = request.POST.get('password', '').strip()
+    role = request.POST.get('role', '').strip()
+    dept_id = request.POST.get('department_id', '')
+
+    if not full_name or not email or not password or not role:
+        messages.error(request, 'All fields (name, email, password, role) are required.')
+        return redirect('admin_users')
+
+    if User.objects.filter(username=email).exists() or User.objects.filter(email=email).exists():
+        messages.error(request, 'A user with that email already exists.')
+        return redirect('admin_users')
+
+    dept = None
+    if dept_id:
+        dept = get_object_or_404(Department, pk=dept_id)
+
+    parts = full_name.split()
+    first_name = parts[0]
+    last_name = ' '.join(parts[1:]) if len(parts) > 1 else ''
+
+    user = User.objects.create_user(username=email, email=email, first_name=first_name, last_name=last_name)
+    user.set_password(password)
+    user.is_active = True
+    user.save()
+
+    profile = UserProfile.objects.create(user=user, role=role, department=dept)
+
+    log_action(request.user, 'CREATE', 'User', user.pk, f'Created user {email} role={role}')
+    messages.success(request, f'User "{email}" created.')
+    return redirect('admin_users')
+
+
+@login_required
+@role_required('ADMIN')
+def admin_edit_user(request, user_id):
+    if request.method != 'POST':
+        return redirect('admin_users')
+
+    user = get_object_or_404(User, pk=user_id)
+    profile = getattr(user, 'profile', None)
+    if profile is None:
+        profile = UserProfile.objects.create(user=user)
+
+    full_name = request.POST.get('full_name', '').strip()
+    email = request.POST.get('email', '').strip().lower()
+    role = request.POST.get('role', '').strip()
+    dept_id = request.POST.get('department_id', '')
+    password = request.POST.get('password', '').strip()
+
+    # Validate email uniqueness (exclude self)
+    if email and User.objects.filter(email=email).exclude(pk=user_id).exists():
+        messages.error(request, 'Another user with that email already exists.')
+        return redirect('admin_users')
+
+    if full_name:
+        parts = full_name.split()
+        user.first_name = parts[0]
+        user.last_name = ' '.join(parts[1:]) if len(parts) > 1 else ''
+
+    if email:
+        user.email = email
+        user.username = email
+
+    if password:
+        user.set_password(password)
+
+    user.save()
+
+    # Role & department
+    if role:
+        profile.role = role
+    if dept_id:
+        profile.department = get_object_or_404(Department, pk=dept_id)
+    else:
+        profile.department = None
+    profile.save()
+
+    log_action(request.user, 'UPDATE', 'User', user.pk, f'Updated user {user.username} role={profile.role}')
+    messages.success(request, f'User "{user.username}" updated.')
+    return redirect('admin_users')
+
+
+@login_required
+@role_required('ADMIN')
+def admin_toggle_user_active(request, user_id):
+    if request.method != 'POST':
+        return redirect('admin_users')
+
+    user = get_object_or_404(User, pk=user_id)
+    if user.is_superuser:
+        messages.error(request, 'Cannot deactivate a superuser.')
+        return redirect('admin_users')
+
+    profile = getattr(user, 'profile', None)
+    user.is_active = not user.is_active
+    user.save()
+
+    if profile:
+        profile.deleted_at = timezone.now() if not user.is_active else None
+        profile.save()
+
+    action = 'Deactivated' if not user.is_active else 'Reactivated'
+    log_action(request.user, 'TOGGLE_ACTIVE', 'User', user.pk, f'{action} {user.username}')
+    messages.success(request, f'User "{user.username}" {action.lower()}.')
+    return redirect('admin_users')
 
 
 # ══════════════════════════════════════════════════════════════
