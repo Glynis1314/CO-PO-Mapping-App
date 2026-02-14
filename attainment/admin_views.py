@@ -25,6 +25,8 @@ from attainment.models import (
     TeacherCourseAssignment,
     UserProfile,
     Role,
+    GlobalConfig,
+    GlobalConfigHistory,
 )
 from attainment.utils.rbac import role_required
 from attainment.utils.audit import log_action
@@ -792,8 +794,120 @@ def admin_unassign_course_from_teacher(request, teacher_id, course_id):
 
 
 # ══════════════════════════════════════════════════════════════
-#  API HELPERS (JSON for cascading dropdowns)
-# ══════════════════════════════════════════════════════════════
+#  SETTINGS (Thresholds, Weightages & Change History)
+# ═════════════════════════════════════════════════════════════=
+
+@login_required
+@role_required('ADMIN')
+def admin_settings(request):
+    """Show and update global attainment settings. Records a history entry on save."""
+    cfg = GlobalConfig.objects.first()
+    if cfg is None:
+        cfg = GlobalConfig.objects.create()
+
+    # Handle POST (save or reset)
+    if request.method == 'POST':
+        action = request.POST.get('action', 'save')
+        if action == 'reset':
+            # reset to defaults (use model defaults) — record per-field diffs so template can render them
+            defaults = {
+                'co_target_percent': 60.0,
+                'co_target_marks_percent': 60.0,
+                'direct_weightage': 0.8,
+                'indirect_weightage': 0.2,
+                'ia1_weightage': 0.2,
+                'ia2_weightage': 0.2,
+                'end_sem_weightage': 0.6,
+                'po_target_level': 2.5,
+                'level1_threshold': 50.0,
+                'level2_threshold': 60.0,
+                'level3_threshold': 70.0,
+            }
+            diffs = {}
+            for k, dv in defaults.items():
+                old = getattr(cfg, k)
+                if float(old) != float(dv):
+                    diffs[k] = [old, dv]
+                    setattr(cfg, k, dv)
+
+            cfg.save()
+            version = GlobalConfigHistory.objects.filter(global_config=cfg).count() + 1
+            if diffs:
+                GlobalConfigHistory.objects.create(
+                    global_config=cfg,
+                    changed_by=request.user.username,
+                    changes=diffs,
+                    version=version,
+                )
+            else:
+                # no-op reset (still record action)
+                GlobalConfigHistory.objects.create(
+                    global_config=cfg,
+                    changed_by=request.user.username,
+                    changes={'reset_to_defaults': ['no-change', 'defaults']},
+                    version=version,
+                )
+            messages.success(request, 'Settings reset to defaults.')
+            return redirect('admin_settings')
+
+        # Save — validate weight sums
+        try:
+            new = {
+                'co_target_percent': float(request.POST.get('co_target_percent', cfg.co_target_percent)),
+                'co_target_marks_percent': float(request.POST.get('co_target_marks_percent', cfg.co_target_marks_percent)),
+                'direct_weightage': float(request.POST.get('direct_weightage', cfg.direct_weightage)),
+                'indirect_weightage': float(request.POST.get('indirect_weightage', cfg.indirect_weightage)),
+                'ia1_weightage': float(request.POST.get('ia1_weightage', cfg.ia1_weightage)),
+                'ia2_weightage': float(request.POST.get('ia2_weightage', cfg.ia2_weightage)),
+                'end_sem_weightage': float(request.POST.get('end_sem_weightage', cfg.end_sem_weightage)),
+                'po_target_level': float(request.POST.get('po_target_level', cfg.po_target_level)),
+                'level1_threshold': float(request.POST.get('level1_threshold', cfg.level1_threshold)),
+                'level2_threshold': float(request.POST.get('level2_threshold', cfg.level2_threshold)),
+                'level3_threshold': float(request.POST.get('level3_threshold', cfg.level3_threshold)),
+            }
+        except ValueError:
+            messages.error(request, 'Invalid numeric value provided.')
+            return redirect('admin_settings')
+
+        # Validate sums (IA1+IA2+EndSem == 1.0) and (direct+indirect == 1.0)
+        if abs((new['ia1_weightage'] + new['ia2_weightage'] + new['end_sem_weightage']) - 1.0) > 0.001:
+            messages.error(request, 'IA1 + IA2 + EndSem weightages must sum to 1.0')
+            return redirect('admin_settings')
+        if abs((new['direct_weightage'] + new['indirect_weightage']) - 1.0) > 0.001:
+            messages.error(request, 'Direct + Indirect weightages must sum to 1.0')
+            return redirect('admin_settings')
+
+        # Compute diffs
+        diffs = {}
+        for k, v in new.items():
+            old_v = getattr(cfg, k)
+            if float(old_v) != float(v):
+                diffs[k] = [old_v, v]
+                setattr(cfg, k, v)
+
+        if diffs:
+            cfg.save()
+            version = (GlobalConfigHistory.objects.filter(global_config=cfg).count() + 1)
+            GlobalConfigHistory.objects.create(
+                global_config=cfg,
+                changed_by=request.user.username,
+                changes=diffs,
+                version=version,
+            )
+            log_action(request.user, 'UPDATE', 'GlobalConfig', cfg.pk, f'Updated config: {list(diffs.keys())}')
+            messages.success(request, 'Settings saved.')
+        else:
+            messages.info(request, 'No changes detected.')
+
+        return redirect('admin_settings')
+
+    # GET — render page
+    histories = GlobalConfigHistory.objects.filter(global_config=cfg).order_by('-version')[:50]
+    context = {
+        'config': cfg,
+        'histories': histories,
+    }
+    return render(request, 'admin_panel/settings.html', context)
 
 @login_required
 @role_required('ADMIN')

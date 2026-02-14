@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}System Settings — Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">{% include "components/sidebar_admin.html" %}</div>
+  <div class="col-md-9">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">System Settings</h3>
+        <div class="text-muted small">Configure attainment thresholds, weightages, and targets</div>
+      </div>
+    </div>
+
+    {% if messages %}
+      <div class="mb-3">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <ul class="nav nav-tabs mb-3" id="settingsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="thresholds-tab" data-bs-toggle="tab" data-bs-target="#thresholds" type="button" role="tab">Thresholds & Targets</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="weightages-tab" data-bs-toggle="tab" data-bs-target="#weightages" type="button" role="tab">Weightages</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">Change History <span class="badge bg-light text-primary ms-1">{{ histories|length }}</span></button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- Thresholds & Targets -->
+      <div class="tab-pane fade show active" id="thresholds" role="tabpanel">
+        <form method="post" class="card shadow-sm p-4 mb-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save" />
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">CO Target %</label>
+              <input name="co_target_percent" type="number" step="0.1" class="form-control" value="{{ config.co_target_percent }}">
+              <div class="form-text">Percentage of students who must achieve the CO target marks (%)</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">CO Target Marks %</label>
+              <input name="co_target_marks_percent" type="number" step="0.1" class="form-control" value="{{ config.co_target_marks_percent }}">
+              <div class="form-text">Minimum marks percentage a student must score for a CO to be considered attained (%)</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">PO Target Level</label>
+              <input name="po_target_level" type="number" step="0.1" class="form-control" value="{{ config.po_target_level }}">
+              <div class="form-text">Target attainment level for Program Outcomes (0-3 scale)</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Level 3 Threshold</label>
+              <input name="level3_threshold" type="number" step="0.1" class="form-control" value="{{ config.level3_threshold }}">
+              <div class="form-text">Minimum CO attainment % for Level 3 (%)</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Level 2 Threshold</label>
+              <input name="level2_threshold" type="number" step="0.1" class="form-control" value="{{ config.level2_threshold }}">
+              <div class="form-text">Minimum CO attainment % for Level 2 (%)</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Level 1 Threshold</label>
+              <input name="level1_threshold" type="number" step="0.1" class="form-control" value="{{ config.level1_threshold }}">
+              <div class="form-text">Minimum CO attainment % for Level 1 (%)</div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mt-3">
+            <button name="action" value="reset" class="btn btn-link me-2">Reset to Defaults</button>
+            <button type="reset" class="btn btn-outline-secondary me-2">Discard Changes</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Weightages -->
+      <div class="tab-pane fade" id="weightages" role="tabpanel">
+        <form method="post" class="card shadow-sm p-4 mb-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save" />
+
+          <h6>Internal Assessment & End Sem Weightages</h6>
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label">IA1 Weightage</label>
+              <input name="ia1_weightage" type="number" step="0.01" class="form-control" value="{{ config.ia1_weightage }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">IA2 Weightage</label>
+              <input name="ia2_weightage" type="number" step="0.01" class="form-control" value="{{ config.ia2_weightage }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">End Sem Weightage</label>
+              <input name="end_sem_weightage" type="number" step="0.01" class="form-control" value="{{ config.end_sem_weightage }}">
+            </div>
+          </div>
+          <div class="small mb-4">Sum must equal 1.0</div>
+
+          <h6>Direct & Indirect Assessment Weightages</h6>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Direct Weightage</label>
+              <input name="direct_weightage" type="number" step="0.01" class="form-control" value="{{ config.direct_weightage }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Indirect Weightage</label>
+              <input name="indirect_weightage" type="number" step="0.01" class="form-control" value="{{ config.indirect_weightage }}">
+            </div>
+          </div>
+          <div class="small mb-4">Direct + Indirect must equal 1.0</div>
+
+          <div class="d-flex justify-content-end mt-3">
+            <button type="reset" class="btn btn-outline-secondary me-2">Discard Changes</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Change History -->
+      <div class="tab-pane fade" id="history" role="tabpanel">
+        <div class="card shadow-sm p-3">
+          <h6 class="mb-3">Change History</h6>
+          <div class="list-group">
+            {% for h in histories %}
+            <div class="list-group-item d-flex justify-content-between align-items-start">
+              <div>
+                <div class="small text-muted">v{{ h.version }} — {{ h.changed_by }} &middot; {{ h.created_at|date:"n/j/Y, P" }}</div>
+                <div class="mt-1">
+                  {% for key, vals in h.changes.items %}
+                    <span class="badge bg-light text-primary me-1">{{ key|capfirst }}: {{ vals.0 }} → {{ vals.1 }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="list-group-item text-muted">No changes yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
