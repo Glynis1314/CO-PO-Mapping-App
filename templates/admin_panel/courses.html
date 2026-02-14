@@ -86,6 +86,7 @@
             <th>Semester</th>
             <th>Department</th>
             <th>Program</th>
+            <th>Teachers</th>
             <th class="text-end">Actions</th>
           </tr>
         </thead>
@@ -104,6 +105,59 @@
             <td>{{ c.department.name }}</td>
             <td>
               {% if c.program %}{{ c.program.name }}{% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+
+            <td>
+              {% with assigns=c.teachers.all %}
+                {% if assigns %}
+                  {% for a in assigns %}
+                    <span class="badge bg-light border">{{ a.teacher.get_full_name|default:a.teacher.username }}</span>
+                    <form method="post" action="{% url 'admin_unassign_course_from_teacher' a.teacher.pk c.pk %}" class="d-inline ms-1">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-outline-danger">Remove</button>
+                    </form>
+                    <br/>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">Unassigned</span>
+                {% endif %}
+              {% endwith %}
+
+              <div class="mt-2">
+                <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#assignTeacherModal{{ c.pk }}">Assign</button>
+              </div>
+
+              <!-- Assign modal -->
+              <div class="modal fade" id="assignTeacherModal{{ c.pk }}" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                  <div class="modal-content">
+                    <form method="post" action="{% url 'admin_assign_course' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="course_id" value="{{ c.pk }}">
+                      <div class="modal-header">
+                        <h6 class="modal-title">Assign teacher — {{ c.code }}</h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label">Teacher</label>
+                          <select class="form-select" name="teacher_id" required>
+                            <option value="">— Select teacher —</option>
+                            {% for t in teachers %}
+                            <option value="{{ t.pk }}">{{ t.get_full_name|default:t.username }} ({{ t.email }})</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Assign</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
             </td>
             <td class="text-end">
               <button class="btn btn-outline-primary btn-sm" title="Edit"
