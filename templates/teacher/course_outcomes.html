@@ -17,7 +17,11 @@
 
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0"><i class="bi bi-bullseye me-2"></i>Course Outcomes — {{ course.code }}</h4>
-    {% if locked %}
+    {% if not locked %}
+      <button class="btn btn-sm btn-primary" id="btnAddCO" data-bs-toggle="modal" data-bs-target="#coModal">
+        <i class="bi bi-plus-lg me-1"></i> Add CO
+      </button>
+    {% else %}
       <span class="badge bg-danger"><i class="bi bi-lock-fill"></i> Semester Locked</span>
     {% endif %}
   </div>
@@ -31,94 +35,185 @@
     {% endfor %}
   {% endif %}
 
-  <!-- Existing COs -->
-  <div class="card mb-4">
-    <div class="card-body p-0">
-      <table class="table table-hover mb-0">
-        <thead>
-          <tr>
-            <th style="width:80px">Code</th>
-            <th>Description</th>
-            <th style="width:140px">Bloom Level</th>
-            {% if not locked %}<th style="width:140px">Actions</th>{% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for co in cos %}
-          <tr>
-            <td><span class="badge bg-primary">{{ co.code }}</span></td>
-            <td>
-              {% if not locked %}
-              <form method="post" action="{% url 'edit_co' course.id co.id %}" class="d-flex gap-2 align-items-center">
-                {% csrf_token %}
-                <input type="text" name="description" value="{{ co.description }}" class="form-control form-control-sm" required>
-                <select name="bloom_level" class="form-select form-select-sm" style="width:140px">
-                  <option value="">—</option>
-                  {% for b in bloom_choices %}
-                    <option value="{{ b }}" {% if b in co.bloom_levels %}selected{% endif %}>{{ b }}</option>
-                  {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-sm btn-outline-success" title="Save"><i class="bi bi-check-lg"></i></button>
-              </form>
+  <!-- CO list -->
+  <div class="row g-3">
+    {% for co in cos %}
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body d-flex justify-content-between align-items-start gap-3">
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center mb-2">
+              <span class="badge bg-primary me-3">{{ co.code }}</span>
+              <div class="fw-semibold">{{ co.description }}</div>
+            </div>
+            <div class="mt-2">
+              {% if co.bloom_levels %}
+                {% for bloom in bloom_choices %}
+                  {% if bloom in co.bloom_levels %}
+                    <span class="badge bg-secondary me-1">L{{ forloop.counter }} &nbsp; {{ bloom }}</span>
+                  {% endif %}
+                {% endfor %}
               {% else %}
-                {{ co.description }}
+                <span class="text-muted">No Bloom level selected</span>
               {% endif %}
-            </td>
-            {% if not locked %}
-            <td>
-              {% if co.bloom_levels %}{{ co.bloom_levels|join:", " }}{% else %}—{% endif %}
-            </td>
-            <td>
-              <form method="post" action="{% url 'delete_co' course.id co.id %}" class="d-inline"
-                    onsubmit="return confirm('Delete {{ co.code }}?')">
-                {% csrf_token %}
-                <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
-              </form>
-            </td>
-            {% else %}
-            <td>{% if co.bloom_levels %}{{ co.bloom_levels|join:", " }}{% else %}—{% endif %}</td>
-            {% endif %}
-          </tr>
-          {% empty %}
-          <tr><td colspan="4" class="text-muted text-center py-3">No course outcomes defined yet.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+            </div>
+          </div>
 
-  <!-- Add new CO -->
-  {% if not locked %}
-  <div class="card">
-    <div class="card-header fw-semibold"><i class="bi bi-plus-circle me-2"></i>Add New Course Outcome</div>
-    <div class="card-body">
-      <form method="post" action="{% url 'create_co' course.id %}">
-        {% csrf_token %}
-        <div class="row g-3 align-items-end">
-          <div class="col-md-6">
-            <label class="form-label">Description <span class="text-danger">*</span></label>
-            <textarea name="description" class="form-control" rows="2" required placeholder="e.g., Understand the principles of OOP"></textarea>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Bloom Level</label>
-            <select name="bloom_level" class="form-select">
-              <option value="">— Select —</option>
-              {% for b in bloom_choices %}
-                <option value="{{ b }}">{{ b }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-md-3">
-            <button type="submit" class="btn btn-primary w-100">
-              <i class="bi bi-plus-lg me-1"></i> Add CO
-            </button>
+          <div class="text-end">
+            {% if not locked %}
+              <div class="btn-group" role="group">
+                <button class="btn btn-sm btn-outline-secondary btn-edit-co"
+                        data-edit-url="{% url 'edit_co' course.id co.id %}"
+                        data-code="{{ co.code }}"
+                        data-description="{{ co.description|escapejs }}"
+                        data-blooms="{{ co.bloom_levels|join:"," }}"
+                        data-bs-toggle="modal" data-bs-target="#coModal">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <form method="post" action="{% url 'delete_co' course.id co.id %}" class="d-inline ms-1"
+                      onsubmit="return confirm('Delete {{ co.code }}?')">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            {% endif %}
           </div>
         </div>
-      </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body text-center text-muted py-4">No course outcomes defined yet.</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- CO Modal (Add / Edit) -->
+  {% if not locked %}
+  <div class="modal fade" id="coModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <form id="coForm" method="post" action="">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="coModalTitle">Add Course Outcome</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">CO Code</label>
+              <input type="text" name="code" id="coCode" class="form-control" required>
+              <div class="form-text">Suggested: <code>{{ suggested_code }}</code></div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description <span class="text-danger">*</span></label>
+              <textarea name="description" id="coDescription" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Bloom Levels (select one or more)</label>
+              <div class="d-flex gap-2 flex-wrap" id="bloomCards">
+                {% for b in bloom_choices %}
+                  <label class="card bloom-card p-2 text-center" data-value="{{ b }}" style="min-width:110px; cursor:pointer;">
+                    <input type="checkbox" name="bloom_levels" value="{{ b }}" class="form-check-input bloom-checkbox d-none">
+                    <div class="fw-semibold">L{{ forloop.counter }}</div>
+                    <div class="small text-muted">{{ b }}</div>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="coSubmitBtn">Save</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
   {% endif %}
 
 </div>
 </div>
+
+{% if not locked %}
+<style>
+  .bloom-card { border:1px solid #e9ecef; border-radius:6px; padding:10px; }
+  .bloom-card.active { border-color: #0d6efd; background-color: #e9f2ff; }
+</style>
+<script>
+  (function(){
+    const suggested = "{{ suggested_code }}";
+    const coForm = document.getElementById('coForm');
+    const modalTitle = document.getElementById('coModalTitle');
+    const coCode = document.getElementById('coCode');
+    const coDescription = document.getElementById('coDescription');
+    const bloomCards = document.querySelectorAll('.bloom-card');
+    const bloomCheckboxes = document.querySelectorAll('.bloom-checkbox');
+    const btnAdd = document.getElementById('btnAddCO');
+
+    function clearSelections(){
+      bloomCheckboxes.forEach(cb => cb.checked = false);
+      bloomCards.forEach(c => c.classList.remove('active'));
+    }
+    function setSelections(values){
+      clearSelections();
+      if(!values) return;
+      const arr = values.split(',').map(s => s.trim()).filter(Boolean);
+      bloomCheckboxes.forEach(cb => {
+        if(arr.includes(cb.value)){
+          cb.checked = true;
+          cb.closest('.bloom-card').classList.add('active');
+        }
+      });
+    }
+
+    // make cards toggle the hidden checkbox
+    bloomCards.forEach(card => {
+      card.addEventListener('click', function(e){
+        const cb = this.querySelector('.bloom-checkbox');
+        cb.checked = !cb.checked;
+        this.classList.toggle('active', cb.checked);
+      });
+    });
+
+    // Add CO button handler — prefill suggested values
+    if(btnAdd){
+      btnAdd.addEventListener('click', function(){
+        modalTitle.textContent = 'Add Course Outcome';
+        coForm.action = "{% url 'create_co' course.id %}";
+        coCode.value = suggested;
+        coDescription.value = '';
+        clearSelections();
+        document.getElementById('coSubmitBtn').textContent = 'Create';
+      });
+    }
+
+    // Edit buttons — populate modal from data attributes
+    document.querySelectorAll('.btn-edit-co').forEach(btn => {
+      btn.addEventListener('click', function(){
+        modalTitle.textContent = 'Edit Course Outcome';
+        coForm.action = this.dataset.editUrl;
+        coCode.value = this.dataset.code || '';
+        coDescription.value = this.dataset.description || '';
+        setSelections(this.dataset.blooms || '');
+        document.getElementById('coSubmitBtn').textContent = 'Update';
+      });
+    });
+
+    // Reset modal when closed
+    const coModalEl = document.getElementById('coModal');
+    if(coModalEl){
+      coModalEl.addEventListener('hidden.bs.modal', function () {
+        coForm.action = '';
+        coCode.value = '';
+        coDescription.value = '';
+        clearSelections();
+      });
+    }
+  })();
+</script>
+{% endif %}
+
 {% endblock %}

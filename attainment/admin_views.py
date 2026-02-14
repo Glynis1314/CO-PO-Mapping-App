@@ -27,6 +27,7 @@ from attainment.models import (
     Role,
     GlobalConfig,
     GlobalConfigHistory,
+    RolePermission,
 )
 from attainment.utils.rbac import role_required
 from attainment.utils.audit import log_action
@@ -908,6 +909,111 @@ def admin_settings(request):
         'histories': histories,
     }
     return render(request, 'admin_panel/settings.html', context)
+
+
+# ══════════════════════════════════════════════════════════════
+#  RBAC / ROLES & PERMISSIONS
+# ═════════════════════════════════════════════════════════════=
+
+
+@login_required
+@role_required('ADMIN')
+def admin_rbac(request):
+    # summary counts
+    total = User.objects.count()
+    admins = UserProfile.objects.filter(role=Role.ADMIN).count()
+    hods = UserProfile.objects.filter(role=Role.HOD).count()
+    teachers = UserProfile.objects.filter(role=Role.TEACHER).count()
+    inactive = User.objects.filter(is_active=False).count()
+
+    # Role overview — permissions per role (enabled)
+    role_perms = {}
+    # sensible default permission list to show in the matrix (keeps UI consistent)
+    permissions_list = [
+        'users.list','users.create','users.update','users.delete','users.changeRole','users.activate',
+        'courses.create','courses.update','courses.delete','courses.view',
+        'assessments.manage','marks.upload','marks.view','attainment.calculate','attainment.view',
+        'reports.view','reports.generate','departments.manage','programs.manage','surveys.manage','cqi.create','cqi.review'
+    ]
+
+    role_perms_ordered = []
+    for r_val, r_label in Role.choices:
+        enabled = list(RolePermission.objects.filter(role=r_val, enabled=True).values_list('permission', flat=True))
+        user_count = UserProfile.objects.filter(role=r_val).count()
+        role_perms[r_val] = enabled
+        role_perms_ordered.append((r_val, r_label, enabled, user_count))
+
+    # Users list
+    users = User.objects.select_related('profile').order_by('first_name', 'last_name')
+
+    # permissions matrix (permission -> role -> bool)
+    matrix = []
+    for perm in permissions_list:
+        row = {'permission': perm, 'roles': {}, 'values': []}
+        for r_val, _ in Role.choices:
+            exists = RolePermission.objects.filter(role=r_val, permission=perm, enabled=True).exists()
+            row['roles'][r_val] = exists
+            row['values'].append(exists)
+        matrix.append(row)
+
+    context = {
+        'total': total,
+        'admins': admins,
+        'hods': hods,
+        'teachers': teachers,
+        'inactive': inactive,
+        'role_perms': role_perms,
+        'role_perms_ordered': role_perms_ordered,
+        'users': users,
+        'matrix': matrix,
+        'roles': Role.choices,
+    }
+    return render(request, 'admin_panel/rbac.html', context)
+
+
+@login_required
+@role_required('ADMIN')
+def admin_update_role_permissions(request, role):
+    """Update the set of enabled permissions for a role (form POST)."""
+    if request.method != 'POST':
+        return redirect('admin_rbac')
+
+    selected = request.POST.getlist('permissions')
+    # ensure Role exists
+    valid = [r for r, _ in Role.choices]
+    if role not in valid:
+        messages.error(request, 'Invalid role')
+        return redirect('admin_rbac')
+
+    # Set enabled=True for selected, False for others (for the known permission set)
+    all_perms = set(request.POST.getlist('all_permissions'))
+    for perm in all_perms:
+        obj, created = RolePermission.objects.get_or_create(role=role, permission=perm)
+        obj.enabled = perm in selected
+        obj.save()
+
+    log_action(request.user, 'UPDATE', 'RolePermission', role, f'Updated permissions for {role}')
+    messages.success(request, f'Permissions updated for {role}.')
+    return redirect('admin_rbac')
+
+
+@login_required
+@role_required('ADMIN')
+def admin_toggle_permission(request):
+    """AJAX/POST endpoint to toggle a single role-permission pair."""
+    if request.method != 'POST':
+        return redirect('admin_rbac')
+    role = request.POST.get('role')
+    perm = request.POST.get('permission')
+    if not role or not perm:
+        messages.error(request, 'Missing parameters')
+        return redirect('admin_rbac')
+    rp, _ = RolePermission.objects.get_or_create(role=role, permission=perm)
+    rp.enabled = not rp.enabled
+    rp.save()
+    log_action(request.user, 'TOGGLE', 'RolePermission', role, f'{perm} -> {rp.enabled}')
+    messages.success(request, 'Permission toggled.')
+    return redirect('admin_rbac')
 
 @login_required
 @role_required('ADMIN')
