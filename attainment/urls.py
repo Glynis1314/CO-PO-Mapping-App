@@ -121,6 +121,11 @@ urlpatterns = [
     # Settings (thresholds, weightages, change history)
     path('admin-panel/settings/', av.admin_settings, name='admin_settings'),
 
+    # RBAC / Roles & Access
+    path('admin-panel/rbac/', av.admin_rbac, name='admin_rbac'),
+    path('admin-panel/rbac/role/<str:role>/update/', av.admin_update_role_permissions, name='admin_update_role_permissions'),
+    path('admin-panel/rbac/toggle/', av.admin_toggle_permission, name='admin_toggle_permission'),
+
     # Admin API (cascading dropdowns)
     path('admin-panel/api/semesters/<int:ay_id>/', av.api_semesters_for_ay, name="api_semesters_for_ay"),
     path('admin-panel/api/programs/<int:dept_id>/', av.api_programs_for_dept, name="api_programs_for_dept"),

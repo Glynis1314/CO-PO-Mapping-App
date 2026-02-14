@@ -173,15 +173,22 @@ def course_overview(request, course_id, course=None):
 @teacher_owns_course
 def manage_cos(request, course_id, course=None):
     """
-    List + create COs.  Inline edit/delete via separate endpoints.
+    List + create COs.  Modal-based add/edit and delete via separate endpoints.
     """
     locked = course.semester.is_locked if course.semester else False
     cos = CourseOutcome.objects.filter(course=course).order_by("code")
+    existing_count = cos.count()
+
+    # map bloom label -> level number (L1..L6)
+    bloom_map = {name: idx + 1 for idx, name in enumerate(BLOOM_CHOICES)}
+
     context = {
         "course": course,
         "cos": cos,
         "locked": locked,
         "bloom_choices": BLOOM_CHOICES,
+        "bloom_map": bloom_map,
+        "suggested_code": f"CO{existing_count + 1}",
     }
     return render(request, "teacher/course_outcomes.html", context)
 
@@ -195,25 +202,32 @@ def create_co(request, course_id, course=None):
         return redirect("manage_cos", course_id=course_id)
 
     description = request.POST.get("description", "").strip()
-    bloom = request.POST.get("bloom_level", "")
+    # allow multiple bloom levels via checkboxes (or single-select fallback)
+    blooms = request.POST.getlist("bloom_levels") or ([request.POST.get("bloom_level")] if request.POST.get("bloom_level") else [])
+    code_input = request.POST.get("code", "").strip()
 
     if not description:
         messages.error(request, "Description is required.")
         return redirect("manage_cos", course_id=course_id)
 
-    # Auto-generate code
-    existing = CourseOutcome.objects.filter(course=course).count()
-    code = f"CO{existing + 1}"
-    # Ensure uniqueness
-    while CourseOutcome.objects.filter(course=course, code=code).exists():
-        existing += 1
+    # Determine code: use provided code if unique, otherwise auto-generate
+    if code_input:
+        code = code_input
+        if CourseOutcome.objects.filter(course=course, code=code).exists():
+            messages.error(request, f"Course outcome code '{code}' already exists.")
+            return redirect("manage_cos", course_id=course_id)
+    else:
+        existing = CourseOutcome.objects.filter(course=course).count()
         code = f"CO{existing + 1}"
+        while CourseOutcome.objects.filter(course=course, code=code).exists():
+            existing += 1
+            code = f"CO{existing + 1}"
 
     co = CourseOutcome.objects.create(
         course=course,
         code=code,
         description=description,
-        bloom_levels=[bloom] if bloom else [],
+        bloom_levels=blooms or [],
     )
     log_action(request.user, "CREATE", "CourseOutcome", co.pk,
                f"Created {code} for {course.code}")
@@ -231,10 +245,19 @@ def edit_co(request, course_id, co_id, course=None):
         return redirect("manage_cos", course_id=course_id)
 
     description = request.POST.get("description", "").strip()
-    bloom = request.POST.get("bloom_level", "")
+    blooms = request.POST.getlist("bloom_levels") or ([request.POST.get("bloom_level")] if request.POST.get("bloom_level") else [])
+    code_input = request.POST.get("code", "").strip()
+
+    # allow updating code if unique
+    if code_input and code_input != co.code:
+        if CourseOutcome.objects.filter(course=course, code=code_input).exclude(pk=co.pk).exists():
+            messages.error(request, f"Course outcome code '{code_input}' already exists.")
+            return redirect("manage_cos", course_id=course_id)
+        co.code = code_input
+
     if description:
         co.description = description
-    co.bloom_levels = [bloom] if bloom else co.bloom_levels
+    co.bloom_levels = blooms or co.bloom_levels
     co.save()
     log_action(request.user, "UPDATE", "CourseOutcome", co.pk,
                f"Edited {co.code}")
