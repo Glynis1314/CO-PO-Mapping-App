@@ -1,0 +1,4 @@
+Django==4.2.26
+python-dotenv>=1.0.0
+dj-database-url>=1.0.0
+whitenoise>=6.0.0
