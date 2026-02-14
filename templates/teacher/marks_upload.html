@@ -61,8 +61,9 @@
         {% csrf_token %}
         <div class="row g-3 align-items-end">
           <div class="col-md-8">
-            <label class="form-label">CSV File <span class="text-danger">*</span></label>
-            <input type="file" name="file" class="form-control" accept=".csv" required>
+            <label class="form-label">CSV / Excel File <span class="text-danger">*</span></label>
+            <input type="file" name="file" class="form-control" accept=".csv, .xls, .xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" required>
+            <div class="form-text small">Accepts <code>.csv</code>, <code>.xlsx</code> or <code>.xls</code>. First column must be <code>RollNo</code>.</div>
           </div>
           <div class="col-md-4">
             <button type="submit" class="btn btn-primary w-100">
