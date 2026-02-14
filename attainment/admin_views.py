@@ -446,12 +446,16 @@ def admin_courses(request):
     if f_ay:
         semesters = semesters.filter(academic_year_id=f_ay)
 
+    # Available teachers (only TEACHER role and active) for assignment UI
+    teachers = User.objects.filter(profile__role=Role.TEACHER, is_active=True).order_by('first_name', 'last_name', 'username')
+
     return render(request, "admin_panel/courses.html", {
         "courses": courses,
         "academic_years": academic_years,
         "semesters": semesters,
         "departments": departments,
         "programs": programs,
+        "teachers": teachers,
         "f_ay": int(f_ay) if f_ay else None,
         "f_sem": int(f_sem) if f_sem else None,
         "f_dept": int(f_dept) if f_dept else None,
@@ -723,6 +727,68 @@ def admin_toggle_user_active(request, user_id):
     log_action(request.user, 'TOGGLE_ACTIVE', 'User', user.pk, f'{action} {user.username}')
     messages.success(request, f'User "{user.username}" {action.lower()}.')
     return redirect('admin_users')
+
+
+# ══════════════════════════════════════════════════════════════
+#  TEACHERS (Admin teacher-management + course assignments)
+# ═════════════════════════════════════════════════════════════=
+
+@login_required
+@role_required('ADMIN')
+def admin_teachers(request):
+    """List teachers and allow course assignments."""
+    teachers = User.objects.filter(profile__role=Role.TEACHER).select_related('profile').order_by('first_name', 'last_name', 'username')
+    courses = Course.objects.select_related('department', 'semester', 'program').order_by('code')
+    return render(request, 'admin_panel/teachers.html', {
+        'teachers': teachers,
+        'courses': courses,
+    })
+
+
+@login_required
+@role_required('ADMIN')
+def admin_assign_course(request):
+    """Assign a course to a teacher (generic POST endpoint).
+    Expects POST: teacher_id, course_id
+    """
+    if request.method != 'POST':
+        return redirect('admin_teachers')
+
+    teacher_id = request.POST.get('teacher_id')
+    course_id = request.POST.get('course_id')
+
+    if not teacher_id or not course_id:
+        messages.error(request, 'Teacher and course are required.')
+        return redirect('admin_teachers')
+
+    teacher = get_object_or_404(User, pk=teacher_id)
+    course = get_object_or_404(Course, pk=course_id)
+
+    if TeacherCourseAssignment.objects.filter(teacher=teacher, course=course).exists():
+        messages.error(request, 'This teacher is already assigned to the course.')
+        return redirect('admin_teachers')
+
+    TeacherCourseAssignment.objects.create(teacher=teacher, course=course)
+    log_action(request.user, 'ASSIGN', 'TeacherCourseAssignment', 0, f'Assigned {teacher.username} -> {course.code}')
+    messages.success(request, f'Assigned {teacher.get_full_name() or teacher.username} to {course.code}.')
+    return redirect('admin_teachers')
+
+
+@login_required
+@role_required('ADMIN')
+def admin_unassign_course_from_teacher(request, teacher_id, course_id):
+    if request.method != 'POST':
+        return redirect('admin_teachers')
+
+    assignment = TeacherCourseAssignment.objects.filter(teacher_id=teacher_id, course_id=course_id).first()
+    if not assignment:
+        messages.error(request, 'Assignment not found.')
+        return redirect('admin_teachers')
+
+    assignment.delete()
+    log_action(request.user, 'UNASSIGN', 'TeacherCourseAssignment', 0, f'Removed teacher {teacher_id} from course {course_id}')
+    messages.success(request, 'Assignment removed.')
+    return redirect('admin_teachers')
 
 
 # ══════════════════════════════════════════════════════════════

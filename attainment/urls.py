@@ -113,6 +113,11 @@ urlpatterns = [
     path('admin-panel/users/<int:user_id>/edit/', av.admin_edit_user, name="admin_edit_user"),
     path('admin-panel/users/<int:user_id>/toggle-active/', av.admin_toggle_user_active, name="admin_toggle_user_active"),
 
+    # Teachers (admin-managed) — manage teacher accounts and assign courses
+    path('admin-panel/teachers/', av.admin_teachers, name="admin_teachers"),
+    path('admin-panel/assign-course/', av.admin_assign_course, name="admin_assign_course"),
+    path('admin-panel/teachers/<int:teacher_id>/unassign-course/<int:course_id>/', av.admin_unassign_course_from_teacher, name="admin_unassign_course_from_teacher"),
+
     # Admin API (cascading dropdowns)
     path('admin-panel/api/semesters/<int:ay_id>/', av.api_semesters_for_ay, name="api_semesters_for_ay"),
     path('admin-panel/api/programs/<int:dept_id>/', av.api_programs_for_dept, name="api_programs_for_dept"),
