@@ -548,24 +548,69 @@ def marks_upload_process(request, course_id, assessment_id, course=None):
         return redirect("marks_upload_page", course_id=course_id,
                         assessment_id=assessment_id)
 
-    # Read CSV
-    try:
-        raw = uploaded_file.read()
-        for enc in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
-            try:
-                text = raw.decode(enc)
-                break
-            except (UnicodeDecodeError, LookupError):
-                continue
-        else:
-            messages.error(request, "Unable to decode file encoding.")
+    # Support CSV and Excel (.xls / .xlsx)
+    filename = (uploaded_file.name or "").lower()
+    reader = None
+    file_headers = []
+
+    if filename.endswith('.csv'):
+        # CSV path (existing behavior)
+        try:
+            raw = uploaded_file.read()
+            for enc in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
+                try:
+                    text = raw.decode(enc)
+                    break
+                except (UnicodeDecodeError, LookupError):
+                    continue
+            else:
+                messages.error(request, "Unable to decode file encoding.")
+                return redirect("marks_upload_page", course_id=course_id,
+                                assessment_id=assessment_id)
+
+            reader = csv.DictReader(io.StringIO(text))
+            file_headers = [h.strip() for h in (reader.fieldnames or [])]
+        except Exception as e:
+            messages.error(request, f"CSV read error: {e}")
             return redirect("marks_upload_page", course_id=course_id,
                             assessment_id=assessment_id)
 
-        reader = csv.DictReader(io.StringIO(text))
-        file_headers = [h.strip() for h in (reader.fieldnames or [])]
-    except Exception as e:
-        messages.error(request, f"File read error: {e}")
+    elif filename.endswith(('.xls', '.xlsx')):
+        # Excel path (uses openpyxl if available)
+        try:
+            try:
+                import openpyxl  # optional dependency
+            except ImportError:
+                messages.error(request, "Excel uploads require the 'openpyxl' package. Please install it in the environment.")
+                return redirect("marks_upload_page", course_id=course_id,
+                                assessment_id=assessment_id)
+
+            wb = openpyxl.load_workbook(io.BytesIO(uploaded_file.read()), read_only=True, data_only=True)
+            ws = wb.active
+            rows = list(ws.iter_rows(values_only=True))
+            if not rows:
+                messages.error(request, "Uploaded Excel file is empty.")
+                return redirect("marks_upload_page", course_id=course_id,
+                                assessment_id=assessment_id)
+
+            headers = [str(h).strip() if h is not None else '' for h in rows[0]]
+            file_headers = headers
+
+            # convert Excel rows to list-of-dicts to reuse CSV parsing logic
+            data_rows = []
+            for r in rows[1:]:
+                # ensure row has same length as headers
+                cells = list(r) + [None] * (len(headers) - len(r))
+                rowdict = {headers[i]: ('' if cells[i] is None else str(cells[i])) for i in range(len(headers))}
+                data_rows.append(rowdict)
+            reader = data_rows
+        except Exception as e:
+            messages.error(request, f"Excel read error: {e}")
+            return redirect("marks_upload_page", course_id=course_id,
+                            assessment_id=assessment_id)
+
+    else:
+        messages.error(request, "Unsupported file type. Please upload a .csv, .xls or .xlsx file.")
         return redirect("marks_upload_page", course_id=course_id,
                         assessment_id=assessment_id)
 
