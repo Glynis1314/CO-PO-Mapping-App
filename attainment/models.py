@@ -172,6 +172,7 @@ class Course(models.Model):
 class TeacherCourseAssignment(models.Model):
     """
     Prisma: CourseTeacher
+    Enforce at-most-one teacher per course via a DB unique constraint on `course`.
     """
     teacher = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="teaching"
@@ -179,6 +180,11 @@ class TeacherCourseAssignment(models.Model):
     course = models.ForeignKey(
         Course, on_delete=models.CASCADE, related_name="teachers"
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["course"], name="unique_course_assignment"),
+        ]
 
     def __str__(self):
         return f"{self.teacher.username} → {self.course.code}"

@@ -767,8 +767,12 @@ def admin_assign_course(request):
     teacher = get_object_or_404(User, pk=teacher_id)
     course = get_object_or_404(Course, pk=course_id)
 
-    if TeacherCourseAssignment.objects.filter(teacher=teacher, course=course).exists():
-        messages.error(request, 'This teacher is already assigned to the course.')
+    existing = TeacherCourseAssignment.objects.filter(course=course).first()
+    if existing:
+        if existing.teacher_id == teacher.id:
+            messages.error(request, 'This teacher is already assigned to the course.')
+        else:
+            messages.error(request, f'Course {course.code} is already assigned to {existing.teacher.get_full_name() or existing.teacher.username}.')
         return redirect('admin_teachers')
 
     TeacherCourseAssignment.objects.create(teacher=teacher, course=course)

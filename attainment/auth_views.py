@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from .models import Role
 
 
 def login_view(request):
@@ -47,13 +48,27 @@ def logout_view(request):
 
 
 def _role_redirect(user):
+    """Return the dashboard name based on UserProfile.role (preferred),
+    then fall back to is_staff/groups for backward compatibility.
+    """
+    profile = getattr(user, "profile", None)
+    if profile:
+        if profile.role == Role.PRINCIPAL:
+            return "dashboard_principal"
+        if profile.role == Role.HOD:
+            return "dashboard_hod"
+        if profile.role == Role.TEACHER:
+            return "teacher_dashboard"
+        if profile.role == Role.ADMIN:
+            return "admin_dashboard"
 
+    # Backwards-compat / fallback checks
+    if user.is_staff:
+        return "admin_dashboard"
     if user.groups.filter(name="Principal").exists():
         return "dashboard_principal"
-
     if user.groups.filter(name="HOD").exists():
         return "dashboard_hod"
-
     if user.groups.filter(name="Teacher").exists():
         return "teacher_dashboard"
 

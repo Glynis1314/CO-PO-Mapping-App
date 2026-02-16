@@ -1,5 +1,6 @@
 import csv
 from django.shortcuts import render, redirect
+from .auth_views import _role_redirect
 from .models import Student, Assessment, AssessmentComponent, StudentMark, CourseOutcome, COAttainment, Department, POAttainment, Course, TeacherCourseAssignment
 from .models import AcademicYear,COtoPOMapping, ProgramOutcome
 from django.contrib import messages
@@ -264,21 +265,37 @@ def assign_subjects_view(request):
     return render(request, 'assign_subjects.html', context)
 
 def assign_subject_action(request):
-    """Handles the POST request to save a new assignment."""
+    """Handles the POST request to save a new assignment.
+
+    Enforces "one teacher per course" and shows a friendly message if the
+    course is already assigned.
+    """
     if request.method == "POST":
         course_id = request.POST.get('course_id')
         teacher_id = request.POST.get('teacher_id')
-        
-        # Prevent duplicate assignments
-        if TeacherCourseAssignment.objects.filter(course_id=course_id, teacher_id=teacher_id).exists():
-            messages.warning(request, "This teacher is already assigned to this subject.")
-        else:
-            TeacherCourseAssignment.objects.create(
-                course_id=course_id, 
-                teacher_id=teacher_id
-            )
-            messages.success(request, "Subject assigned successfully!")
-            
+
+        # Validate inputs
+        if not course_id or not teacher_id:
+            messages.error(request, "Course and teacher are required.")
+            return redirect('assign_subjects')
+
+        # If course is already assigned to someone, block the operation
+        existing = TeacherCourseAssignment.objects.filter(course_id=course_id).first()
+        if existing:
+            # If it's the same teacher, show a specific message
+            if str(existing.teacher_id) == str(teacher_id):
+                messages.warning(request, "This teacher is already assigned to this subject.")
+            else:
+                messages.warning(request, f"Course already assigned to {existing.teacher.get_full_name() or existing.teacher.username}.")
+            return redirect('assign_subjects')
+
+        # Safe to create
+        TeacherCourseAssignment.objects.create(
+            course_id=course_id,
+            teacher_id=teacher_id
+        )
+        messages.success(request, "Subject assigned successfully!")
+
     return redirect('assign_subjects')
 
 @login_required
@@ -296,6 +313,12 @@ def teacher_dashboard(request):
 
 
 def index_view(request):
+    """Landing page. If the user is already authenticated, redirect to their dashboard.
+
+    This prevents signed-in users from returning to the public root page.
+    """
+    if request.user.is_authenticated:
+        return redirect(_role_redirect(request.user))
     return render(request, "index.html")
 
 
