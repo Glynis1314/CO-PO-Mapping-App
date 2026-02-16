@@ -47,16 +47,14 @@ def logout_view(request):
 
 
 def _role_redirect(user):
-    """Return the URL name for the user's dashboard based on their role."""
-    profile = getattr(user, "profile", None)
-    if profile is None:
-        return "index"
 
-    role = profile.role
-    if role == "ADMIN":
-        return "admin_dashboard"
-    elif role == "HOD":
+    if user.groups.filter(name="Principal").exists():
+        return "dashboard_principal"
+
+    if user.groups.filter(name="HOD").exists():
         return "dashboard_hod"
-    elif role == "TEACHER":
+
+    if user.groups.filter(name="Teacher").exists():
         return "teacher_dashboard"
+
     return "index"

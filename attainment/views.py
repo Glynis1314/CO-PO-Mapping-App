@@ -1,113 +1,241 @@
 import csv
 from django.shortcuts import render, redirect
 from .models import Student, Assessment, AssessmentComponent, StudentMark, CourseOutcome, COAttainment, Department, POAttainment, Course, TeacherCourseAssignment
-from .models import AcademicYear
+from .models import AcademicYear,COtoPOMapping, ProgramOutcome
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Count
-from attainment.utils.rbac import role_required
+from django.db.models import Sum
+from .models import GlobalConfig, COSurveyAggregate
+from django.db import models
 
 
-def index_view(request):
-    """Landing page: if authenticated, redirect to role dashboard; else show login."""
-    if request.user.is_authenticated:
-        profile = getattr(request.user, "profile", None)
-        if profile:
-            if profile.role == "ADMIN":
-                return redirect("admin_dashboard")
-            elif profile.role == "HOD":
-                return redirect("dashboard_hod")
-            elif profile.role == "TEACHER":
-                return redirect("teacher_dashboard")
-    return render(request, "index.html")
-
-
-@login_required
-@role_required('HOD', 'ADMIN')
 def dashboard_hod(request):
-    from .models import AcademicYear, Course, TeacherCourseAssignment, COAttainment
+
     context = {
-        'year_count': AcademicYear.objects.count(),
-        'course_count': Course.objects.count(),
-        'teacher_count': TeacherCourseAssignment.objects.values('teacher').distinct().count(),
-        'low_co_count': COAttainment.objects.filter(final_score__lt=2).count(),
+        "year_count": AcademicYear.objects.count(),
+        "course_count": Course.objects.count(),
+        "teacher_count": TeacherCourseAssignment.objects.values('teacher').distinct().count(),
+        "low_co_count": COAttainment.objects.filter(attainment_level__lt=2).count(),
     }
-    return render(request, 'dashboard_hod.html', context)
+
+    return render(request, "dashboard_hod.html", context)
 
 
-@login_required
-@role_required('ADMIN')
+
 def dashboard_principal(request):
     return principal_dashboard(request)
 
-
-@login_required
-@role_required('HOD', 'ADMIN')
 def upload_marks(request, assessment_id):
+
+    assessment = Assessment.objects.get(id=assessment_id)
+
     if request.method == "POST" and request.FILES.get('csv_file'):
+
         csv_file = request.FILES['csv_file']
-        decoded_file = csv_file.read().decode('utf-8').splitlines()
-        reader = csv.DictReader(decoded_file)
+        decoded = csv_file.read().decode("utf-8").splitlines()
+        reader = csv.DictReader(decoded)
+
+        # wipe previous marks for this assessment
+        StudentMark.objects.filter(component__assessment=assessment).delete()
 
         for row in reader:
-            # 1. Get or Create Student
+
+            roll = row["RollNumber"]
+
             student, _ = Student.objects.get_or_create(
-                roll_number=row['RollNumber'],
-                defaults={'name': row['Name'], 'department_id': 1} # Adjust dept logic as needed
+                roll_number=roll,
+                defaults={"name": roll, "department_id": 1}
             )
 
-            # 2. Loop through columns to find Question Marks
             for key, value in row.items():
-                if key not in ['RollNumber', 'Name']:
-                    # Match column header (e.g., 'Q1') to AssessmentComponent
-                    component = AssessmentComponent.objects.filter(
-                        assessment_id=assessment_id, 
-                        component_number=key
-                    ).first()
-                    
-                    if component:
-                        StudentMark.objects.update_or_create(
-                            student=student,
-                            component=component,
-                            defaults={'marks_obtained': float(value)}
-                        )
-        
-        # 3. After upload, trigger the CO Attainment calculation
-        calculate_co_attainment(assessment_id)
-        return redirect('attainment_report')
 
-    return render(request, 'upload_marks.html')
+                if key == "RollNumber":
+                    continue
+
+                component = AssessmentComponent.objects.filter(
+                    assessment=assessment,
+                    component_number=key
+                ).first()
+
+                if component:
+
+                    StudentMark.objects.create(
+                        student=student,
+                        component=component,
+                        question=component,
+                        marks=float(value or 0),
+                        marks_obtained=float(value or 0)
+                    )
+
+        calculate_co_attainment(assessment.id)
+        return redirect("attainment_report")
+
+    return render(request, "upload_marks.html")
+
+
+from .models import GlobalConfig, COSurveyAggregate
+
+
+from django.db.models import Sum
+
+from django.db.models import Sum
+from .models import GlobalConfig, COSurveyAggregate
+
+
+from django.db.models import Sum
 
 def calculate_co_attainment(assessment_id):
-    """
-    Implements Method B: % of students scoring >= p% marks [cite: 48-50, 234].
-    """
-    outcomes = CourseOutcome.objects.all() # In production, filter by course
+
+    assessment = Assessment.objects.get(id=assessment_id)
+    course = assessment.course
+    config = GlobalConfig.objects.first()
+
+    outcomes = CourseOutcome.objects.filter(course=course)
+
+    # students who actually have marks FOR THIS assessment
+    students = StudentMark.objects.filter(
+        component__assessment=assessment
+    ).values_list('student_id', flat=True).distinct()
+
+    print("Students found:", len(students))
+
     for co in outcomes:
-        components = AssessmentComponent.objects.filter(course_outcome=co)
-        total_students = Student.objects.count()
-        students_passed = 0
 
-        for student in Student.objects.all():
-            # Calculate student's performance for this CO
-            marks = StudentMark.objects.filter(student=student, component__in=components)
-            # Logic: Did they get >= p% of total possible marks for this CO? [cite: 51, 157, 235]
-            # ... calculation logic ...
-            
-        # 4. Map average % to Levels 1, 2, or 3 based on targets (x, y, z) [cite: 52-54, 236-239, 715]
-        
+        components = AssessmentComponent.objects.filter(
+            course_outcome=co,
+            assessment=assessment
+        )
+
+        total_max = components.aggregate(Sum('max_marks'))['max_marks__sum'] or 0
+
+        print(co.code, "max marks:", total_max)
+
+        if total_max == 0:
+            continue
+
+        passed = 0
+
+        for sid in students:
+
+            obtained = StudentMark.objects.filter(
+                student_id=sid,
+                component__in=components
+            ).aggregate(Sum('marks_obtained'))['marks_obtained__sum'] or 0
+
+            percent = (obtained / total_max) * 100
+
+            if percent >= co.expected_proficiency:
+                passed += 1
+
+        total_students = len(students)
+
+        if total_students == 0:
+            continue
+
+        attainment_percent = (passed / total_students) * 100
+
+        if attainment_percent >= config.level3_threshold:
+            level = "LEVEL_3"
+        elif attainment_percent >= config.level2_threshold:
+            level = "LEVEL_2"
+        elif attainment_percent >= config.level1_threshold:
+            level = "LEVEL_1"
+        else:
+            level = "LEVEL_0"
+
+        direct = attainment_percent
+
+        survey = COSurveyAggregate.objects.filter(course_outcome=co).first()
+        indirect = (survey.average_score / 5) * 100 if survey else 0
+
+        final = (
+            direct * config.direct_weightage +
+            indirect * config.indirect_weightage
+        )
+
+        COAttainment.objects.update_or_create(
+            course_outcome=co,
+            defaults={
+                "attainment_percentage": round(attainment_percent, 2),
+                "direct_score": round(direct, 2),
+                "indirect_score": round(indirect, 2),
+                "final_score": round(final, 2),
+                "level": level,
+                "attainment_level": int(level.split("_")[1])
+            }
+        )
+
+    calculate_po_attainment(course)
 
 
-@login_required
-@role_required('HOD', 'ADMIN')
+def calculate_po_attainment(course):
+
+    config = GlobalConfig.objects.first()
+    pos = ProgramOutcome.objects.all()
+
+    for po in pos:
+
+        mappings = COtoPOMapping.objects.filter(
+            program_outcome=po,
+            course_outcome__course=course
+        )
+
+        weighted_sum = 0
+        total_weight = 0
+
+        for mapping in mappings:
+
+            co_att = COAttainment.objects.filter(
+                course_outcome=mapping.course_outcome
+            ).first()
+
+            if not co_att:
+                continue
+
+            weighted_sum += (co_att.final_score or 0) * mapping.level
+            total_weight += mapping.level
+
+        if total_weight == 0:
+            continue
+
+        direct = weighted_sum / total_weight
+        indirect = 0  # Add PO survey later if needed
+
+        final = (
+            direct * config.direct_weightage +
+            indirect * config.indirect_weightage
+        )
+
+        # Level mapping
+        if final >= config.level3_threshold:
+            level = 3
+        elif final >= config.level2_threshold:
+            level = 2
+        elif final >= config.level1_threshold:
+            level = 1
+        else:
+            level = 0
+
+        POAttainment.objects.update_or_create(
+            program_outcome=po,
+            defaults={
+                "direct_score": round(direct, 2),
+                "indirect_score": indirect,
+                "final_score": round(final, 2),
+                "attainment_level": level,
+                "attainment_percentage": round(final, 2),
+            }
+        )
+   
+
+
 def academic_years_list(request):
     # This renders the table with existing data
     years = AcademicYear.objects.all()
     return render(request, 'academic_years.html', {'years': years})
 
-@login_required
-@role_required('HOD', 'ADMIN')
 def create_academic_year(request):
     if request.method == "POST":
         year_range = request.POST.get('name')
@@ -126,8 +254,6 @@ def create_academic_year(request):
         
         return redirect('academic_years_list')
     
-@login_required
-@role_required('HOD', 'ADMIN')
 def assign_subjects_view(request):
     """Renders the assignment page with existing data."""
     context = {
@@ -137,8 +263,6 @@ def assign_subjects_view(request):
     }
     return render(request, 'assign_subjects.html', context)
 
-@login_required
-@role_required('HOD', 'ADMIN')
 def assign_subject_action(request):
     """Handles the POST request to save a new assignment."""
     if request.method == "POST":
@@ -157,11 +281,25 @@ def assign_subject_action(request):
             
     return redirect('assign_subjects')
 
+@login_required
+def teacher_dashboard(request):
+    # Fetch only the subjects assigned to the logged-in teacher
+    assigned_courses = TeacherCourseAssignment.objects.filter(teacher=request.user)
+    
+    # We can also fetch the CO status for these courses for a quick overview
+    # This helps show "Completion Status" on the dashboard
+    context = {
+        'assignments': assigned_courses,
+        'user_name': request.user.get_full_name() or request.user.username,
+    }
+    return render(request, 'teacher/dashboard.html', context)
+
+
+def index_view(request):
+    return render(request, "index.html")
 
 
 # The logic for Principal dashboard
-@login_required
-@role_required('ADMIN')
 def principal_dashboard(request):
     # --- Real Summary Stats ---
     # Count total departments in the system 
@@ -185,8 +323,10 @@ def principal_dashboard(request):
 
         # Calculate Average PO Attainment for this department [cite: 1076, 1083]
         avg_po = POAttainment.objects.filter(
-            program_outcome__course__department=dept
-        ).aggregate(Avg('attainment_percentage'))['attainment_percentage__avg'] or 0
+           program_outcome__program__department=dept
+        ).aggregate(
+            Avg('attainment_percentage')
+        )['attainment_percentage__avg'] or 0
 
         # Determine the "Gap" Label based on the average % [cite: 72, 264, 1105]
         if avg_co >= 70:
@@ -213,7 +353,6 @@ def principal_dashboard(request):
     return render(request, 'dashboard_principal.html', context)
 
 
-@login_required
 def attainment_report_view(request):
     # Fetch all years and subjects for the dropdowns
     academic_years = AcademicYear.objects.all()
@@ -248,7 +387,6 @@ def attainment_report_view(request):
     return render(request, 'reports/attainment_report.html', context)
 
 
-@login_required
 def gap_analysis_view(request):
 
     departments = Department.objects.all()

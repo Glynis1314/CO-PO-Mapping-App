@@ -11,6 +11,9 @@ class Role(models.TextChoices):
     ADMIN = "ADMIN", "Admin"
     HOD = "HOD", "HOD"
     TEACHER = "TEACHER", "Teacher"
+    PRINCIPAL = "PRINCIPAL", "Principal"
+
+
 
 
 class SemesterType(models.TextChoices):
